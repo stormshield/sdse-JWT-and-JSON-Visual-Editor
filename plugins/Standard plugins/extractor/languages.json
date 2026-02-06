@@ -1,0 +1,27 @@
+{
+    "en": {
+        "context_extract_to_file": "Extract to extract.json",
+        "msg_extraction_success": "Extraction successful to extract.json",
+        "msg_extraction_error": "Error during extraction: {}"
+    },
+    "fr": {
+        "context_extract_to_file": "Extraire vers extract.json",
+        "msg_extraction_success": "Extraction réussie vers extract.json",
+        "msg_extraction_error": "Erreur lors de l'extraction : {}"
+    },
+    "es": {
+        "context_extract_to_file": "Extraer a extract.json",
+        "msg_extraction_success": "Extracción exitosa a extract.json",
+        "msg_extraction_error": "Error durante la extracción: {}"
+    },
+    "it": {
+        "context_extract_to_file": "Estrai in extract.json",
+        "msg_extraction_success": "Estrazione riuscita in extract.json",
+        "msg_extraction_error": "Errore durante l'estrazione: {}"
+    },
+    "de": {
+        "context_extract_to_file": "In extract.json extrahieren",
+        "msg_extraction_success": "Extraktion nach extract.json erfolgreich",
+        "msg_extraction_error": "Fehler bei der Extraktion: {}"
+    }
+}

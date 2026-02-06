@@ -1,0 +1,17 @@
+{
+    "fr": {
+        "context_generate_id": "Générer ID"
+    },
+    "en": {
+        "context_generate_id": "Generate ID"
+    },
+    "es": {
+        "context_generate_id": "Generar ID"
+    },
+    "de": {
+        "context_generate_id": "ID generieren"
+    },
+    "it": {
+        "context_generate_id": "Genera ID"
+    }
+}

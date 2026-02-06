@@ -1,0 +1,37 @@
+{
+    "fr": {
+        "context_import_cert": "Importer un certificat",
+        "import_cert_dialog_title": "Sélectionner un fichier de certificat",
+        "import_cert_success_title": "Succès",
+        "import_cert_success_text": "Certificat importé avec succès.",
+        "import_cert_error_title": "Erreur"
+    },
+    "en": {
+        "context_import_cert": "Import certificate",
+        "import_cert_dialog_title": "Select certificate file",
+        "import_cert_success_title": "Success",
+        "import_cert_success_text": "Certificate imported successfully.",
+        "import_cert_error_title": "Error"
+    },
+    "es": {
+        "context_import_cert": "Importar certificado",
+        "import_cert_dialog_title": "Seleccionar archivo de certificado",
+        "import_cert_success_title": "Éxito",
+        "import_cert_success_text": "Certificado importado exitosamente.",
+        "import_cert_error_title": "Error"
+    },
+    "de": {
+        "context_import_cert": "Zertifikat importieren",
+        "import_cert_dialog_title": "Zertifikatdatei auswählen",
+        "import_cert_success_title": "Erfolg",
+        "import_cert_success_text": "Zertifikat erfolgreich importiert.",
+        "import_cert_error_title": "Fehler"
+    },
+    "it": {
+        "context_import_cert": "Importa certificato",
+        "import_cert_dialog_title": "Seleziona file certificato",
+        "import_cert_success_title": "Successo",
+        "import_cert_success_text": "Certificato importato con successo.",
+        "import_cert_error_title": "Errore"
+    }
+}

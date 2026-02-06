@@ -1,0 +1,11 @@
+# Drag & drop helper used by the editor and the SDS P7B Builder plugin
+tkinterdnd2
+
+# Certificate tooling used by the core app, the standard certificate plugin, and SDS extras
+cryptography
+
+# SDS Policy Signer plugin (JWT signing)
+pyjwt
+
+# Packager for bundling the main app and its plugins
+pyinstaller
