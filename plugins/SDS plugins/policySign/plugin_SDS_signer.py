@@ -14,6 +14,14 @@ import secrets
 import tempfile
 from typing import Dict, Optional
 
+# Optional drag & drop support (works when the app uses TkinterDnD.Tk)
+try:
+    from tkinterdnd2 import DND_FILES  # type: ignore
+    HAS_DND = True
+except Exception:
+    DND_FILES = None
+    HAS_DND = False
+
 # Try imports
 MISSING_DEPS = []
 
@@ -136,6 +144,60 @@ def update_policy_date_in_file(json_file_path):
         return updated
     except Exception:
         return False
+
+
+def _normalize_path(path: str) -> str:
+    p = (path or "").strip().strip('"')
+    p = p.replace("/", os.sep)
+    return os.path.normpath(p)
+
+
+def _split_dnd_files(data: str):
+    """Parse TkinterDnD's event.data for DND_FILES into a list of paths."""
+    if not data:
+        return []
+
+    data = data.strip()
+
+    # Common format on Windows: {C:\Path With Spaces\a.p12} {C:\b.pfx}
+    if "{" in data and "}" in data:
+        out = []
+        current = []
+        in_brace = False
+        for ch in data:
+            if ch == "{":
+                in_brace = True
+                current = []
+                continue
+            if ch == "}":
+                in_brace = False
+                token = "".join(current).strip()
+                if token:
+                    out.append(token)
+                current = []
+                continue
+            if in_brace:
+                current.append(ch)
+        return [_normalize_path(p) for p in out if p]
+
+    parts = [p for p in data.split() if p]
+    return [_normalize_path(p) for p in parts]
+
+
+def _try_enable_dnd(widget, handler) -> bool:
+    """Enable TkinterDnD drop on a widget if supported (runtime check)."""
+    if not HAS_DND or DND_FILES is None:
+        return False
+    try:
+        drop_target_register = getattr(widget, "drop_target_register", None)
+        dnd_bind = getattr(widget, "dnd_bind", None)
+        if callable(drop_target_register) and callable(dnd_bind):
+            drop_target_register(DND_FILES)
+            dnd_bind("<<Drop>>", handler)
+            return True
+    except Exception:
+        pass
+    return False
 
 
 # ------------------------------------------------------------------------------
@@ -310,6 +372,7 @@ class SignerWindow:
 
         self.p12_label_text = tk.StringVar(value=self.plugin.t("no_p12_selected"))
         self.extract_certs_var = tk.BooleanVar(value=False)
+        self.include_signer_cert_var = tk.BooleanVar(value=False)
 
         self.create_ui()
 
@@ -334,6 +397,8 @@ class SignerWindow:
         self.p12_entry.grid(row=0, column=1, sticky="ew", padx=(0, 5))
         
         ttk.Button(signer_frame, text="...", width=4, command=self.select_p12_file).grid(row=0, column=2, sticky="w")
+
+        _try_enable_dnd(self.p12_entry, self.on_drop_p12)
         
         # Password
         tk.Label(signer_frame, text=self.plugin.t("password_label")).grid(row=1, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
@@ -374,7 +439,9 @@ class SignerWindow:
         self.algorithm_choice.grid(row=1, column=1, sticky="w", pady=2)
 
         # Extract Certs
-        tk.Checkbutton(output_frame, text=self.plugin.t("extract_certs"), variable=self.extract_certs_var).grid(row=2, column=0, columnspan=2, sticky="w", pady=(5, 0))
+        tk.Checkbutton(output_frame, text=self.plugin.t("include_signer_cert"), variable=self.include_signer_cert_var).grid(row=2, column=0, columnspan=2, sticky="w", pady=(5, 0))
+
+        tk.Checkbutton(output_frame, text=self.plugin.t("extract_certs"), variable=self.extract_certs_var).grid(row=3, column=0, columnspan=2, sticky="w", pady=(5, 0))
 
 
         # === 4. Actions & Logs ===
@@ -413,6 +480,29 @@ class SignerWindow:
             self.p12_file_path = path
             self.p12_label_text.set(path)
             self.log_message(self.plugin.t("cert_saved_main", path)) # Re-using key but logic is just selection here
+
+    def on_drop_p12(self, event):
+        try:
+            paths = _split_dnd_files(getattr(event, "data", ""))
+            if not paths:
+                return
+
+            picked = None
+            for p in paths:
+                ext = os.path.splitext(p)[1].lower()
+                if ext in (".p12", ".pfx") and os.path.exists(p):
+                    picked = p
+                    break
+
+            if not picked:
+                return
+
+            self.p12_file_path = picked
+            self.p12_label_text.set(picked)
+            self.log_message(self.plugin.t("cert_saved_main", picked))
+        except Exception:
+            # Fail silently: DnD is optional.
+            return
 
     def toggle_password_visibility(self):
         current_show = self.p12_password_entry.cget('show')
@@ -540,8 +630,10 @@ class SignerWindow:
                 
             private_key, cert, additional_certs = load_private_key_from_p12(self.p12_file_path, pwd)
             pem_key = private_key_to_pem(private_key)
-            x5c_list = cert_to_x5c_list(cert, additional_certs)
-            jwt_headers = {"x5c": x5c_list} if x5c_list else {}
+            jwt_headers = {}
+            if self.include_signer_cert_var.get():
+                x5c_list = cert_to_x5c_list(cert, additional_certs)
+                jwt_headers = {"x5c": x5c_list} if x5c_list else {}
         except Exception as e:
             error_trace = traceback.format_exc()
             messagebox.showerror("Error P12", f"{e}\n\n{error_trace}", parent=self.root)
