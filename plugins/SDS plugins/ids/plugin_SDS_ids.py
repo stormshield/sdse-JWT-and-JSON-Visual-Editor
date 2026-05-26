@@ -65,7 +65,7 @@ except ImportError:
     Encoding = None
 
 # Keys that reference certificate IDs in certificateData
-CERTIFICATE_ID_KEYS = {"certificateIds", "certificateID", "updateOnlyFromCAs", "removeOnlyFromCAs"}
+CERTIFICATE_ID_KEYS = {"certificateIds", "certificateID", "updateOnlyFromCAs", "removeOnlyFromCAs", "signatureKeyAuthorityId", "encryptionKeyAuthorityId"}
 # Keys that reference LDAP IDs in ldapData
 LDAP_ID_KEYS = {"ldapAddressBookList"}
 
