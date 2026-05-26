@@ -9,7 +9,7 @@ This plugin provides tools to generate unique identifiers, preview linked data, 
 - **Multiple Formats**:
   - **Mongo-style**: 24-character hex string (timestamp + random).
   - **UUID**: Standard Version 4 UUID.
-- **Certificate Preview**: Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, or `removeOnlyFromCAs` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with options to copy fields or save as `.cer`.
+- **Certificate Preview**: Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId`, `encryptionKeyAuthorityId` or `ldapAddressBookList` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with options to copy fields or save as `.cer`.
 - **LDAP Preview**: Right-click on an ID inside `ldapAddressBookList` to display the associated LDAP configuration (name, address, port, protocol, base DN, timeout, search attributes) with options to copy fields.
 - **ID Reveal (AltGr)**: Hold the **AltGr** key to temporarily replace all ID references in the editor with their corresponding human-readable names. Release AltGr to restore the original IDs.
 
@@ -21,7 +21,7 @@ This plugin provides tools to generate unique identifiers, preview linked data, 
 3. Choose the desired format (mongo or uuid) to replace the existing value.
 
 **Certificate / LDAP Preview:**
-1. Right-click on an ID value within `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, or `ldapAddressBookList`.
+1. Right-click on an ID value within `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId`, `encryptionKeyAuthorityId` or `ldapAddressBookList`.
 2. Select "Show associated certificate" or "LDAP Preview" from the context menu.
 3. A popup window displays the corresponding details fetched from `certificateData` or `ldapData`.
 
@@ -47,8 +47,8 @@ Ce plugin fournit des outils pour générer des identifiants uniques, prévisual
 - **Formats Multiples** :
   - **Style Mongo** : Chaîne hexadécimale de 24 caractères (horodatage + aléatoire).
   - **UUID** : UUID standard de version 4.
-- **Aperçu Certificat** : Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs` ou `removeOnlyFromCAs` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et de sauvegarde en `.cer`.
-- **Aperçu LDAP** : Clic droit sur un ID dans `ldapAddressBookList` pour afficher la configuration LDAP associée (nom, adresse, port, protocole, base DN, timeout, attributs de recherche) avec options de copie.
+- **Aperçu Certificat** : Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId`, `encryptionKeyAuthorityId` ou `ldapAddressBookList` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et de sauvegarde en `.cer`.
+- **Aperçu LDAP** : Clic droit sur un ID dans `ldapAddressBookList` pour afficher la configuration LDAP associée (nom, adresse, port, protocole, base DN, timeout, attributs de recherche) avec options de copie. 
 - **Révélation d'IDs (AltGr)** : Maintenez la touche **AltGr** enfoncée pour remplacer temporairement tous les IDs dans l'éditeur par leurs noms lisibles correspondants. Relâchez AltGr pour restaurer les IDs originaux.
 
 ### Utilisation
@@ -59,7 +59,7 @@ Ce plugin fournit des outils pour générer des identifiants uniques, prévisual
 3. Choisissez le format souhaité (mongo ou uuid) pour remplacer la valeur existante.
 
 **Aperçu Certificat / LDAP :**
-1. Faites un clic droit sur une valeur d'ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs` ou `ldapAddressBookList`.
+1. Faites un clic droit sur une valeur d'ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId`, `encryptionKeyAuthorityId` ou `ldapAddressBookList`.
 2. Sélectionnez "Afficher le certificat associé" ou "Aperçu LDAP" dans le menu contextuel.
 3. Une fenêtre popup affiche les détails correspondants récupérés depuis `certificateData` ou `ldapData`.
 
