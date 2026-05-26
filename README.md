@@ -1,8 +1,8 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0  
+**Version:** 2.0.3  
 **Author:** Jérôme BLONDEL  
-**Last Update:** 02/06/2026
+**Last Update:** 26/05/2026
 
 ## Screenshots
 
@@ -36,6 +36,8 @@ The tool is designed to be lightweight, performant (even with large files), and 
     *   **File Merging (Patching):** Intelligent recursive algorithm to merge a modification file into the current JSON (handling IDs in lists).
     *   **Schema Validation:** Validate your JSON against a schema (supports enumerations and types).
     *   **Context Menu Tools:** Generate IDs (ObjectId, UUID) and update date fields directly from the editor.
+    *   **Certificate/LDAP Preview:** Right-click on a referenced ID to instantly preview the associated certificate details or LDAP configuration.
+    *   **ID Reveal (AltGr):** Hold the AltGr key to temporarily replace all IDs with human-readable names (certificate CN or LDAP config name).
 
 *   **Security & Certificates:**
     *   Visualization of X.509 certificate details (Subject CN, Issuer CN) present in JSON values (requires `cryptography` library).
@@ -50,14 +52,14 @@ The tool is designed to be lightweight, performant (even with large files), and 
 *   **Extensibility (Plugins):**
     *   **Modular Architecture:** Expand functionality via Python plugins organized in categories: `Required`, `Standard`, and `SDS` (Specialized).
     *   **Decentralized Translations:** Each plugin manages its own translations via a local `languages.json` file for easier internationalization.
-    *   **Specialized Tools:** Includes plugins like the **SDS Policy Signer** for signing JSON payloads with P12 certificates.
+    *   **Specialized Tools:** Includes plugins like the **SDS Policy Signer** for signing JSON payloads with P12 certificates, and the **ID Reveal** for instant AltGr-based ID resolution.
 
 ### Included Plugins
 
 Plugins shipped in the `plugins/` folder:
 
 *   **Standard plugins**: Boolean toggle, Certificates viewer/extractor, Extractor (to `extract.json`), JSON Schema Generator
-*   **SDS plugins**: Date updater, IDs generator, Import certificates into `certificateData`, P7B Builder (PKCS#7), Policy Signer (P12 → signed JWT)
+*   **SDS plugins**: Date updater, IDs generator & preview (certificate/LDAP), ID Reveal (AltGr), Import certificates into `certificateData`, P7B Builder (PKCS#7), Policy Signer (P12 → signed JWT)
 
 ## Installation
 
@@ -112,6 +114,7 @@ python script.pyw --lang en
 | **Ctrl + Y** | Redo |
 | **Ctrl + Wheel** | Text Zoom |
 | **Shift + Wheel** | Horizontal Scroll |
+| **AltGr (hold)** | Reveal IDs as names (SDS IDs plugin) |
 
 ## Automation Scripts
 
@@ -130,15 +133,26 @@ The project includes two `.bat` scripts to simplify common tasks:
     *   Generates an **`install.bat`** script in the output folder for easy deployment.
 
 ---
+
+## Changelog
+
+### v2.0.3 — 26/05/2026
+
+*   **New Plugin — ID Reveal (AltGr):** Hold the AltGr key to temporarily replace all hex IDs in the editor with human-readable names (certificate CN from `certificateData`, configuration name from `ldapData`). Revealed names are highlighted in bold cyan. The editor is read-only during reveal and the original content is fully restored on release.
+*   **Certificate Preview by ID:** Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, or `removeOnlyFromCAs` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with copy and `.cer` export options.
+*   **LDAP Preview by ID:** Right-click on an ID inside `ldapAddressBookList` to display the associated LDAP configuration (name, address, port, protocol, username, base DN, depth, timeout, search attributes) with copy options.
+*   **Multilingual support for new features:** All new plugins include translations in 5 languages (FR, EN, ES, DE, IT).
+
+---
 *Developed to simplify JSON configuration management and JWT debugging.*
 
 ***
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0  
+**Version :** 2.0.3  
 **Auteur :** Jérôme BLONDEL  
-**Dernière mise à jour :** 06/02/2026
+**Dernière mise à jour :** 26/05/2026
 
 ## Description
 
@@ -168,6 +182,8 @@ L'outil est conçu pour être léger, performant (même avec de gros fichiers) e
     *   **Fusion de Fichiers (Patching) :** Algorithme récursif intelligent pour fusionner un fichier de modifications dans le JSON actuel (gestion des IDs dans les listes).
     *   **Validation de Schéma :** Validez votre JSON contre un schéma (support des énumérations et types).
     *   **Outils Contextuels :** Génération d'identifiants (ObjectId, UUID) et mise à jour des champs date directement depuis l'éditeur.
+    *   **Aperçu Certificat/LDAP :** Clic droit sur un ID référencé pour prévisualiser instantanément les détails du certificat associé ou la configuration LDAP.
+    *   **Révélation d'IDs (AltGr) :** Maintenez la touche AltGr pour remplacer temporairement tous les IDs par des noms lisibles (CN du certificat ou nom de configuration LDAP).
 
 *   **Sécurité & Certificats :**
     *   Visualisation des détails des certificats X.509 (CN Sujet, CN Émetteur) présents dans les valeurs JSON (requiert la librairie `cryptography`).
@@ -182,14 +198,14 @@ L'outil est conçu pour être léger, performant (même avec de gros fichiers) e
 *   **Extensibilité (Plugins) :**
     *   **Architecture Modulaire :** Possibilité d'étendre les fonctionnalités via des plugins Python organisés par catégories : `Required`, `Standard`, et `SDS` (Spécialisés).
     *   **Traductions Décentralisées :** Chaque plugin gère ses propres traductions via un fichier `languages.json` local, facilitant l'internationalisation.
-    *   **Outils Spécialisés :** Inclut des outils comme le **SDS Policy Signer** pour signer des payloads JSON avec des certificats P12.
+    *   **Outils Spécialisés :** Inclut des outils comme le **SDS Policy Signer** pour signer des payloads JSON avec des certificats P12, et le **ID Reveal** pour la résolution instantanée d'IDs via AltGr.
 
 ### Plugins Inclus
 
 Plugins fournis dans le dossier `plugins/` :
 
 *   **Plugins Standard** : Bascule booléen, Certificats (visualisation/extraction), Extractor (vers `extract.json`), Générateur de schéma JSON
-*   **Plugins SDS** : Mise à jour de date, Génération d’IDs, Import de certificats dans `certificateData`, Générateur P7B (PKCS#7), Signature de politique (P12 → JWT signé)
+*   **Plugins SDS** : Mise à jour de date, Génération d'IDs & aperçu (certificat/LDAP), Révélation d'IDs (AltGr), Import de certificats dans `certificateData`, Générateur P7B (PKCS#7), Signature de politique (P12 → JWT signé)
 
 ## Installation
 
@@ -244,10 +260,11 @@ python script.pyw --lang en
 | **Ctrl + Y** | Rétablir |
 | **Ctrl + Molette** | Zoom Text |
 | **Shift + Molette** | Scroll Horizontal |
+| **AltGr (maintenu)** | Révéler les IDs sous forme de noms (plugin SDS IDs) |
 
 ## Scripts d'Automatisation
 
-Le projet inclut deux scripts `.bat` pour simplifier les tâches courantes :
+Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes :
 
 *   **`run_app.bat`** :
     *   **Lanceur Universel** : Glissez et déposez n'importe quel fichier `.py` ou `.pyw` sur ce script pour le lancer.
@@ -260,6 +277,17 @@ Le projet inclut deux scripts `.bat` pour simplifier les tâches courantes :
     *   Gère tout le processus de compilation incluant l'intégration des plugins et des ressources linguistiques.
     *   L'exécutable généré est placé à la racine du projet.
     *   Génère un script **`install.bat`** dans le dossier de sortie pour faciliter le déploiement.
+
+---
+
+## Changelog
+
+### v2.0.3 — 26/05/2026
+
+*   **Nouveau plugin — Révélation d'IDs (AltGr) :** Maintenez la touche AltGr pour remplacer temporairement tous les IDs hexadécimaux dans l'éditeur par des noms lisibles (CN du certificat depuis `certificateData`, nom de configuration depuis `ldapData`). Les noms révélés sont mis en surbrillance en gras cyan. L'éditeur est en lecture seule pendant la révélation et le contenu original est entièrement restauré au relâchement.
+*   **Aperçu Certificat par ID :** Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs` ou `removeOnlyFromCAs` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et export `.cer`.
+*   **Aperçu LDAP par ID :** Clic droit sur un ID dans `ldapAddressBookList` pour afficher la configuration LDAP associée (nom, adresse, port, protocole, utilisateur, base DN, profondeur, timeout, attributs de recherche) avec options de copie.
+*   **Support multilingue des nouvelles fonctionnalités :** Tous les nouveaux plugins incluent des traductions en 5 langues (FR, EN, ES, DE, IT).
 
 ---
 *Développé pour simplifier la gestion des configurations JSON et le débogage JWT.*

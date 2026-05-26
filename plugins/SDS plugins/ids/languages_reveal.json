@@ -1,0 +1,22 @@
+{
+    "fr": {
+        "status_revealing": "{count} ID(s) révélé(s) — Relâchez AltGr pour restaurer",
+        "status_restored": "Prêt"
+    },
+    "en": {
+        "status_revealing": "{count} ID(s) revealed — Release AltGr to restore",
+        "status_restored": "Ready"
+    },
+    "es": {
+        "status_revealing": "{count} ID(s) revelados — Suelte AltGr para restaurar",
+        "status_restored": "Listo"
+    },
+    "de": {
+        "status_revealing": "{count} ID(s) aufgedeckt — AltGr loslassen zum Wiederherstellen",
+        "status_restored": "Bereit"
+    },
+    "it": {
+        "status_revealing": "{count} ID rivelati — Rilasciare AltGr per ripristinare",
+        "status_restored": "Pronto"
+    }
+}
