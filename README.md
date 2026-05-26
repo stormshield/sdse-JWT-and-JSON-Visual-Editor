@@ -139,7 +139,7 @@ The project includes two `.bat` scripts to simplify common tasks:
 ### v2.0.3 — 26/05/2026
 
 *   **New Plugin — ID Reveal (AltGr):** Hold the AltGr key to temporarily replace all hex IDs in the editor with human-readable names (certificate CN from `certificateData`, configuration name from `ldapData`). Revealed names are highlighted in bold cyan. The editor is read-only during reveal and the original content is fully restored on release.
-*   **Certificate Preview by ID:** Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, or `removeOnlyFromCAs` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with copy and `.cer` export options.
+*   **Certificate Preview by ID:** Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId`, or `encryptionKeyAuthorityId` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with copy and `.cer` export options.
 *   **LDAP Preview by ID:** Right-click on an ID inside `ldapAddressBookList` to display the associated LDAP configuration (name, address, port, protocol, username, base DN, depth, timeout, search attributes) with copy options.
 *   **Multilingual support for new features:** All new plugins include translations in 5 languages (FR, EN, ES, DE, IT).
 
@@ -285,7 +285,7 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 ### v2.0.3 — 26/05/2026
 
 *   **Nouveau plugin — Révélation d'IDs (AltGr) :** Maintenez la touche AltGr pour remplacer temporairement tous les IDs hexadécimaux dans l'éditeur par des noms lisibles (CN du certificat depuis `certificateData`, nom de configuration depuis `ldapData`). Les noms révélés sont mis en surbrillance en gras cyan. L'éditeur est en lecture seule pendant la révélation et le contenu original est entièrement restauré au relâchement.
-*   **Aperçu Certificat par ID :** Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs` ou `removeOnlyFromCAs` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et export `.cer`.
+*   **Aperçu Certificat par ID :** Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId` ou `encryptionKeyAuthorityId` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et export `.cer`.
 *   **Aperçu LDAP par ID :** Clic droit sur un ID dans `ldapAddressBookList` pour afficher la configuration LDAP associée (nom, adresse, port, protocole, utilisateur, base DN, profondeur, timeout, attributs de recherche) avec options de copie.
 *   **Support multilingue des nouvelles fonctionnalités :** Tous les nouveaux plugins incluent des traductions en 5 langues (FR, EN, ES, DE, IT).
 
