@@ -1,8 +1,8 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0.3  
+**Version:** 2.0.4  
 **Author:** Jérôme BLONDEL  
-**Last Update:** 26/05/2026
+**Last Update:** 27/05/2026
 
 ## Screenshots
 
@@ -136,6 +136,12 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 ## Changelog
 
+### v2.0.4 — 27/05/2026
+
+*   **ID Reveal — Visual improvements:** Removed bold formatting from revealed IDs for better readability. Retained cyan color with dark background highlighting.
+*   **ID Reveal — Syntax highlighting fix:** Fixed a bug where syntax highlighting was lost during ID reveal (incorrect method name `apply_syntax_highlighting` → `apply_syntax_highlight`, and text widget was disabled before highlighting was applied).
+*   **ID Reveal — Scroll fix during reveal:** AltGr+Scroll no longer triggers zoom. During ID reveal, mouse wheel scrolling now correctly scrolls the document instead of changing zoom level.
+
 ### v2.0.3 — 26/05/2026
 
 *   **New Plugin — ID Reveal (AltGr):** Hold the AltGr key to temporarily replace all hex IDs in the editor with human-readable names (certificate CN from `certificateData`, configuration name from `ldapData`). Revealed names are highlighted in bold cyan. The editor is read-only during reveal and the original content is fully restored on release.
@@ -150,9 +156,9 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0.3  
+**Version :** 2.0.4  
 **Auteur :** Jérôme BLONDEL  
-**Dernière mise à jour :** 26/05/2026
+**Dernière mise à jour :** 27/05/2026
 
 ## Description
 
@@ -281,6 +287,12 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 ---
 
 ## Changelog
+
+### v2.0.4 — 27/05/2026
+
+*   **Révélation d'IDs — Améliorations visuelles :** Suppression du formatage gras des IDs révélés pour une meilleure lisibilité. Couleur cyan conservée avec fond noir de surbrillance.
+*   **Révélation d'IDs — Correction coloration syntaxique :** Correction d'un bug où la coloration syntaxique était perdue pendant la révélation (nom de méthode incorrect `apply_syntax_highlighting` → `apply_syntax_highlight`, et widget texte désactivé avant l'application de la coloration).
+*   **Révélation d'IDs — Correction du scroll pendant la révélation :** AltGr+Scroll ne déclenche plus le zoom. Pendant la révélation, le scroll de la souris fait défiler correctement le document au lieu de changer le niveau de zoom.
 
 ### v2.0.3 — 26/05/2026
 

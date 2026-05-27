@@ -30,9 +30,10 @@ This plugin provides tools to generate unique identifiers, preview linked data, 
 2. **Hold AltGr**: all hex IDs referenced throughout the JSON are instantly replaced by:
    - The **CN (Common Name)** extracted from the X.509 certificate (for `certificateData` entries)
    - The **configuration name** (for `ldapData` entries)
-3. Revealed names are highlighted (bold, cyan on dark background) for easy identification.
+3. Revealed names are highlighted in cyan on a dark background for easy identification.
 4. The editor is read-only while revealing to prevent accidental edits.
 5. **Release AltGr**: the original IDs are restored, along with cursor position and scroll state.
+6. **Scroll during reveal**: Mouse wheel scrolling works normally during reveal (AltGr+Scroll does not trigger zoom).
 
 > **Note:** The `cryptography` library is required to extract CN from certificates. Without it, only LDAP names are resolved.
 
@@ -68,9 +69,10 @@ Ce plugin fournit des outils pour générer des identifiants uniques, prévisual
 2. **Maintenez AltGr** : tous les IDs hexadécimaux référencés dans le JSON sont instantanément remplacés par :
    - Le **CN (Common Name)** extrait du certificat X.509 (pour les entrées `certificateData`)
    - Le **nom de configuration** (pour les entrées `ldapData`)
-3. Les noms révélés sont mis en surbrillance (gras, cyan sur fond sombre) pour une identification facile.
+3. Les noms révélés sont mis en surbrillance (cyan sur fond sombre) pour une identification facile.
 4. L'éditeur est en lecture seule pendant la révélation pour éviter toute modification accidentelle.
 5. **Relâchez AltGr** : les IDs originaux sont restaurés, ainsi que la position du curseur et le défilement.
+6. **Scroll pendant la révélation** : Le scroll de la souris fonctionne normalement pendant la révélation (AltGr+Scroll ne déclenche pas le zoom).
 
 > **Note :** La bibliothèque `cryptography` est nécessaire pour extraire le CN des certificats. Sans elle, seuls les noms LDAP sont résolus.
 

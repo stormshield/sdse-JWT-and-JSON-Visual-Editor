@@ -95,6 +95,13 @@ class Plugin:
         # physical state of the right Alt key, and poll for its release.
         
         self.app.bind_all("<KeyPress>", self._on_any_keypress, add="+")
+        
+        # Monkey-patch the mousewheel handlers to prevent zoom during reveal
+        # (AltGr sends Ctrl+Alt on Windows, so Ctrl+Scroll triggers zoom)
+        self._original_on_ctrl_mousewheel = self.app._on_ctrl_mousewheel
+        self._original_on_mousewheel = self.app._on_mousewheel
+        self.app._on_ctrl_mousewheel = self._patched_ctrl_mousewheel
+        self.app._on_mousewheel = self._patched_mousewheel
 
     def _is_altgr_physically_pressed(self):
         """Check if AltGr (Right Alt) is physically pressed using Windows API."""
@@ -102,6 +109,30 @@ class Plugin:
             return bool(ctypes.windll.user32.GetAsyncKeyState(VK_RMENU) & 0x8000)
         except Exception:
             return False
+
+    def _patched_ctrl_mousewheel(self, event):
+        """Intercept Ctrl+MouseWheel: scroll normally during reveal, zoom otherwise."""
+        if self._is_revealing:
+            # Normal vertical scroll instead of zoom
+            if hasattr(event, "delta"):
+                units = int(-1 * (event.delta / 120)) * 3
+                if units == 0:
+                    units = -1 if event.delta > 0 else 3
+                self.app.text.yview_scroll(units, "units")
+            return "break"
+        return self._original_on_ctrl_mousewheel(event)
+
+    def _patched_mousewheel(self, event):
+        """Intercept MouseWheel: prevent Ctrl check from triggering zoom during reveal."""
+        if self._is_revealing:
+            # Skip the Ctrl-state check and just do normal scroll
+            if hasattr(event, "delta"):
+                units = int(-1 * (event.delta / 120)) * 3
+                if units == 0:
+                    units = -1 if event.delta > 0 else 3
+                self.app.text.yview_scroll(units, "units")
+            return "break"
+        return self._original_on_mousewheel(event)
 
     def _on_any_keypress(self, event):
         """Detect AltGr press via any key event + physical key state check."""
@@ -183,9 +214,6 @@ class Plugin:
         self.app.text.delete("1.0", "end")
         self.app.text.insert("1.0", modified_text)
         
-        # Make text read-only during reveal to prevent edits on modified content
-        self.app.text.config(state="disabled")
-        
         # Restore scroll position
         try:
             if self._original_yview:
@@ -197,7 +225,7 @@ class Plugin:
         try:
             # Apply syntax highlighting on the modified text
             try:
-                self.app.apply_syntax_highlighting()
+                self.app.apply_syntax_highlight()
             except Exception:
                 pass
             
@@ -211,6 +239,8 @@ class Plugin:
             except Exception:
                 pass
         finally:
+            # Make text read-only during reveal to prevent edits on modified content
+            self.app.text.config(state="disabled")
             # Always start polling so we can restore on release
             self._start_release_poll()
 
@@ -231,6 +261,10 @@ class Plugin:
             self._is_revealing = False
             return
         
+        # Capture the current scroll position BEFORE restoring text
+        # so the user's scroll during reveal is preserved
+        current_yview = self.app.text.yview()
+        
         # Re-enable editing
         self.app.text.config(state="normal")
         
@@ -238,16 +272,17 @@ class Plugin:
         self.app.text.delete("1.0", "end")
         self.app.text.insert("1.0", self._original_text)
         
-        # Restore cursor and scroll position
+        # Restore cursor position
         try:
             if self._original_insert_pos:
                 self.app.text.mark_set("insert", self._original_insert_pos)
         except Exception:
             pass
         
+        # Restore the scroll position the user was at when they released AltGr
+        # (not the original position from before the reveal)
         try:
-            if self._original_yview:
-                self.app.text.yview_moveto(self._original_yview[0])
+            self.app.text.yview_moveto(current_yview[0])
         except Exception:
             pass
         
@@ -259,7 +294,7 @@ class Plugin:
         
         # Re-apply syntax highlighting
         try:
-            self.app.apply_syntax_highlighting()
+            self.app.apply_syntax_highlight()
         except Exception:
             pass
         
@@ -351,22 +386,11 @@ class Plugin:
         """Apply visual highlighting to all revealed display names."""
         tag_name = "id_reveal"
         self.app.text.tag_remove(tag_name, "1.0", "end")
-        
-        # Get current font info to build a bold variant
-        try:
-            current_font = self.app.text.cget("font")
-            from tkinter import font as tkfont
-            f = tkfont.Font(font=current_font)
-            bold_font = (f.actual("family"), f.actual("size"), "bold")
-        except Exception:
-            bold_font = ("TkFixedFont", 11, "bold")
-        
         # Configure the tag with a distinct style
         self.app.text.tag_configure(
             tag_name,
             background="#2d2d2d",
-            foreground="#00e5ff",
-            font=bold_font
+            foreground="#00e5ff"
         )
         
         # Find and tag all occurrences of each display name
