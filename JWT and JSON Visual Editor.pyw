@@ -4,9 +4,9 @@
 """
 -----------------------------------------------------------------------------
 JWT & JSON Visual Editor
-Version: 2.0
+Version: 2.0.5
 Author: Jérôme BLONDEL (Professional services)
-Last Update: 01/22/2026
+Last Update: 06/05/2026
 
 Description:
 JWT & JSON Visual Editor is a standalone graphical application developed in
@@ -56,6 +56,7 @@ import time
 import datetime
 import uuid
 import secrets
+import webbrowser
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font, simpledialog
 try:
@@ -2227,9 +2228,65 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
 
     def show_about_dialog(self):
         """
-        Displays the About dialog.
+        Displays the About dialog with a clickable GitHub source link (icon + text).
         """
-        messagebox.showinfo(self.t("menu_about"), self.t("about_dialog_text"))
+        import threading
+
+        dialog = tk.Toplevel(self)
+        dialog.title(self.t("menu_about"))
+        dialog.resizable(False, False)
+        dialog.grab_set()
+        dialog.focus_set()
+
+        tk.Label(dialog, text=self.t("about_dialog_text"), justify="center", padx=20, pady=10).pack()
+
+        url = "https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor"
+        bg = dialog.cget("bg")
+
+        link_frame = tk.Frame(dialog, bg=bg)
+        link_frame.pack(pady=(0, 10))
+
+        ico_label = tk.Label(link_frame, bg=bg)
+        ico_label.pack(side="left", padx=(0, 4))
+
+        link = tk.Label(link_frame, text="GitHub", fg="#0078d4", cursor="hand2",
+                        font=("Arial", 10, "underline"))
+        link.pack(side="left")
+        link.bind("<Button-1>", lambda e: webbrowser.open(url))
+
+        def _load_icon():
+            try:
+                import urllib.request
+                req = urllib.request.Request(
+                    "https://github.githubassets.com/favicons/favicon.png",
+                    headers={"User-Agent": "JWT-JSON-Editor/2.0.5"}
+                )
+                with urllib.request.urlopen(req, timeout=2) as resp:
+                    raw = resp.read()
+                b64_str = base64.b64encode(raw).decode("ascii")
+
+                def _update():
+                    if not dialog.winfo_exists():
+                        return
+                    try:
+                        photo = tk.PhotoImage(data=b64_str)
+                        w = photo.width()
+                        if w > 16:
+                            photo = photo.subsample(max(1, w // 16))
+                        ico_label.config(image=photo, cursor="hand2")
+                        ico_label.image = photo  # prevent GC
+                        ico_label.bind("<Button-1>", lambda e: webbrowser.open(url))
+                    except Exception:
+                        pass
+
+                dialog.after(0, _update)
+            except Exception:
+                pass
+
+        threading.Thread(target=_load_icon, daemon=True).start()
+
+        ttk.Button(dialog, text="OK", command=dialog.destroy).pack(pady=10)
+        dialog.wait_window()
 
 def main():
     root = JWTEditorApp()

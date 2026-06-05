@@ -1,8 +1,9 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0.4  
+**Version:** 2.0.5  
 **Author:** Jérôme BLONDEL  
-**Last Update:** 27/05/2026
+**Last Update:** 05/06/2026  
+**Source:** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Screenshots
 
@@ -136,6 +137,11 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 ## Changelog
 
+### v2.0.5 — 05/06/2026
+
+*   **About dialog — Version bump:** Updated version number to 2.0.5 in the About dialog.
+*   **About dialog — Source link:** The About dialog now displays a clickable hyperlink pointing to the project source repository on GitHub.
+
 ### v2.0.4 — 27/05/2026
 
 *   **ID Reveal — Visual improvements:** Removed bold formatting from revealed IDs for better readability. Retained cyan color with dark background highlighting.
@@ -156,9 +162,10 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0.4  
+**Version :** 2.0.5  
 **Auteur :** Jérôme BLONDEL  
-**Dernière mise à jour :** 27/05/2026
+**Dernière mise à jour :** 05/06/2026  
+**Source :** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Description
 
@@ -287,6 +294,11 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 ---
 
 ## Changelog
+
+### v2.0.5 — 05/06/2026
+
+*   **Boîte « À propos » — Mise à jour de la version :** Numéro de version mis à jour en 2.0.5 dans la boîte « À propos ».
+*   **Boîte « À propos » — Lien source :** La boîte « À propos » affiche désormais un lien cliquable pointant vers le dépôt source du projet sur GitHub.
 
 ### v2.0.4 — 27/05/2026
 
