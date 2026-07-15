@@ -4,9 +4,9 @@
 """
 -----------------------------------------------------------------------------
 JWT & JSON Visual Editor
-Version: 2.0.5
+Version: 2.0.6
 Author: Jérôme BLONDEL (Professional services)
-Last Update: 06/05/2026
+Last Update: 15/07/2026
 
 Description:
 JWT & JSON Visual Editor is a standalone graphical application developed in
@@ -2259,7 +2259,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
                 import urllib.request
                 req = urllib.request.Request(
                     "https://github.githubassets.com/favicons/favicon.png",
-                    headers={"User-Agent": "JWT-JSON-Editor/2.0.5"}
+                    headers={"User-Agent": "JWT-JSON-Editor/2.0.6"}
                 )
                 with urllib.request.urlopen(req, timeout=2) as resp:
                     raw = resp.read()

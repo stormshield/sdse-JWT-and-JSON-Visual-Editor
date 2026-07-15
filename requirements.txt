@@ -6,6 +6,7 @@ cryptography
 
 # SDS Policy Signer plugin (JWT signing)
 pyjwt
+python-pkcs11
 
 # Packager for bundling the main app and its plugins
 pyinstaller

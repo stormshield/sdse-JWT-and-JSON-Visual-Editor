@@ -45,6 +45,64 @@ try:
 except ImportError:
     MISSING_DEPS.append("cryptography")
 
+HAS_PKCS11 = False
+try:
+    import pkcs11
+    from pkcs11 import Mechanism, MGF
+    HAS_PKCS11 = True
+except ImportError:
+    pass
+
+def load_plugin_config():
+    base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+    settings_path = os.path.join(base_dir, "settings.json")
+    old_config_path = os.path.join(base_dir, "sds_signer_config.json")
+    
+    migrated_config = {}
+    if os.path.exists(old_config_path):
+        try:
+            with open(old_config_path, "r", encoding="utf-8") as f:
+                migrated_config = json.load(f)
+            os.remove(old_config_path)
+        except Exception:
+            pass
+            
+    settings = {}
+    if os.path.exists(settings_path):
+        try:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+        except Exception:
+            pass
+            
+    if migrated_config:
+        settings["sds_signer"] = migrated_config
+        try:
+            with open(settings_path, "w", encoding="utf-8") as f:
+                json.dump(settings, f, ensure_ascii=False, indent=4)
+        except Exception:
+            pass
+            
+    return settings.get("sds_signer", migrated_config)
+
+def save_plugin_config(config):
+    settings_path = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), "settings.json")
+    settings = {}
+    if os.path.exists(settings_path):
+        try:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                settings = json.load(f)
+        except Exception:
+            pass
+            
+    settings["sds_signer"] = config
+    
+    try:
+        with open(settings_path, "w", encoding="utf-8") as f:
+            json.dump(settings, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Error saving settings: {e}")
+
 def duplicate_json_file(original_path, dest_folder):
     os.makedirs(dest_folder, exist_ok=True)
     name, ext = os.path.splitext(os.path.basename(original_path))
@@ -374,13 +432,26 @@ class SignerWindow:
         self.extract_certs_var = tk.BooleanVar(value=False)
         self.include_signer_cert_var = tk.BooleanVar(value=False)
 
+        # PKCS11 state variables
+        self.config = load_plugin_config()
+        self.pkcs11_dll_path = self.config.get("pkcs11_dll_path", "")
+        self.signing_method = tk.StringVar(value=self.config.get("signing_method", "p12"))
+        self.pkcs11_dll_text = tk.StringVar(value=self.pkcs11_dll_path)
+        self.pkcs11_pin = tk.StringVar()
+        self.loaded_certificates = [] # list of dicts: {"slot": slot, "label": label, "subject": subject, "id": cert_id, "cert": cert_obj}
+
         self.create_ui()
 
         # Bring to front and force focus
         self.root.lift()
         self.root.focus_force()
-        # Optionally, focus the password entry or the first interactive element
-        self.p12_password_entry.focus_set()
+        
+        # Initialize default view and focus
+        self.update_signer_method_ui()
+        if self.signing_method.get() == "p12":
+            self.p12_password_entry.focus_set()
+        else:
+            self.pin_entry.focus_set()
 
     def create_ui(self):
         main_frame = tk.Frame(self.root, padx=10, pady=10)
@@ -390,37 +461,85 @@ class SignerWindow:
         signer_frame = ttk.LabelFrame(main_frame, text=self.plugin.t("group_signer"), padding=(10, 5))
         signer_frame.pack(fill="x", pady=(0, 10))
 
-        # P12 File Selection
-        tk.Label(signer_frame, text=self.plugin.t("signer_label")).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        # Radio Buttons at the top of the group
+        method_container = tk.Frame(signer_frame)
+        method_container.grid(row=0, column=0, columnspan=3, sticky="w", pady=(0, 5))
         
-        self.p12_entry = tk.Entry(signer_frame, textvariable=self.p12_label_text, state="readonly", width=50)
-        self.p12_entry.grid(row=0, column=1, sticky="ew", padx=(0, 5))
+        tk.Label(method_container, text=self.plugin.t("method_label")).pack(side="left", padx=(0, 10))
         
-        ttk.Button(signer_frame, text="...", width=4, command=self.select_p12_file).grid(row=0, column=2, sticky="w")
+        self.r_p12 = tk.Radiobutton(method_container, text=self.plugin.t("method_p12"), variable=self.signing_method, value="p12", command=self.update_signer_method_ui)
+        self.r_p12.pack(side="left", padx=(0, 10))
+        
+        self.r_pkcs11 = tk.Radiobutton(method_container, text=self.plugin.t("method_pkcs11"), variable=self.signing_method, value="pkcs11", command=self.update_signer_method_ui)
+        self.r_pkcs11.pack(side="left")
 
+        # Container for changing frames
+        self.method_details_frame = tk.Frame(signer_frame)
+        self.method_details_frame.grid(row=1, column=0, columnspan=3, sticky="ew")
+        self.method_details_frame.columnconfigure(0, weight=1)
+
+        # Subframe A: P12
+        self.p12_subframe = tk.Frame(self.method_details_frame)
+        self.p12_subframe.columnconfigure(1, weight=1)
+
+        # P12 File Selection
+        tk.Label(self.p12_subframe, text=self.plugin.t("signer_label")).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        self.p12_entry = tk.Entry(self.p12_subframe, textvariable=self.p12_label_text, state="readonly", width=50)
+        self.p12_entry.grid(row=0, column=1, sticky="ew", padx=(0, 5))
+        ttk.Button(self.p12_subframe, text="...", width=4, command=self.select_p12_file).grid(row=0, column=2, sticky="w")
         _try_enable_dnd(self.p12_entry, self.on_drop_p12)
         
         # Password
-        tk.Label(signer_frame, text=self.plugin.t("password_label")).grid(row=1, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
-        
-        pwd_container = tk.Frame(signer_frame)
+        tk.Label(self.p12_subframe, text=self.plugin.t("password_label")).grid(row=1, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
+        pwd_container = tk.Frame(self.p12_subframe)
         pwd_container.grid(row=1, column=1, sticky="w", pady=(5, 0))
-        
         self.p12_password_entry = tk.Entry(pwd_container, show="*", width=30)
         self.p12_password_entry.pack(side="left", fill="x", expand=True)
-        
         self.show_pwd_btn = tk.Button(pwd_container, text="👁", width=3, command=self.toggle_password_visibility)
         self.show_pwd_btn.pack(side="left", padx=(5, 0))
 
-        signer_frame.columnconfigure(1, weight=1)
+        # Subframe B: PKCS11 (Smart Card)
+        self.pkcs11_subframe = tk.Frame(self.method_details_frame)
+        self.pkcs11_subframe.columnconfigure(1, weight=1)
 
+        # DLL Path Selection
+        tk.Label(self.pkcs11_subframe, text=self.plugin.t("dll_label")).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        
+        dll_container = tk.Frame(self.pkcs11_subframe)
+        dll_container.grid(row=0, column=1, columnspan=2, sticky="ew")
+        dll_container.columnconfigure(0, weight=1)
+        
+        self.dll_entry = tk.Entry(dll_container, textvariable=self.pkcs11_dll_text, width=40)
+        self.dll_entry.pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        ttk.Button(dll_container, text="...", width=4, command=self.select_dll_file).pack(side="left", padx=(0, 5))
+        ttk.Button(dll_container, text=self.plugin.t("btn_sds_middleware"), command=self.set_sds_middleware_path).pack(side="left")
+        
+        # PIN code
+        tk.Label(self.pkcs11_subframe, text=self.plugin.t("pin_label")).grid(row=1, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
+        pin_container = tk.Frame(self.pkcs11_subframe)
+        pin_container.grid(row=1, column=1, sticky="w", pady=(5, 0))
+        self.pin_entry = tk.Entry(pin_container, show="*", width=30, textvariable=self.pkcs11_pin)
+        self.pin_entry.pack(side="left", fill="x", expand=True)
+        self.show_pin_btn = tk.Button(pin_container, text="👁", width=3, command=self.toggle_pin_visibility)
+        self.show_pin_btn.pack(side="left", padx=(5, 0))
+        
+        # Load Card Button
+        self.load_cards_btn = ttk.Button(self.pkcs11_subframe, text=self.plugin.t("load_certs_btn"), command=self.load_smartcard_certificates)
+        self.load_cards_btn.grid(row=1, column=2, sticky="w", padx=(5, 0), pady=(5, 0))
+        
+        # Certificate Selector
+        tk.Label(self.pkcs11_subframe, text=self.plugin.t("select_cert_label")).grid(row=2, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
+        self.cert_combobox = ttk.Combobox(self.pkcs11_subframe, state="readonly", width=50)
+        self.cert_combobox.grid(row=2, column=1, columnspan=2, sticky="ew", pady=(5, 0))
+
+        signer_frame.columnconfigure(1, weight=1)
 
         # === 2. Source Group ===
         source_frame = ttk.LabelFrame(main_frame, text=self.plugin.t("group_source"), padding=(10, 5))
         source_frame.pack(fill="x", pady=(0, 10))
 
         tk.Label(source_frame, text=self.plugin.t("using_editor_content"), font=("TkDefaultFont", 9, "italic")).pack(anchor="w")
-
 
         # === 3. Output Parameters Group ===
         output_frame = ttk.LabelFrame(main_frame, text=self.plugin.t("group_output"), padding=(10, 5))
@@ -442,7 +561,6 @@ class SignerWindow:
         tk.Checkbutton(output_frame, text=self.plugin.t("include_signer_cert"), variable=self.include_signer_cert_var).grid(row=2, column=0, columnspan=2, sticky="w", pady=(5, 0))
 
         tk.Checkbutton(output_frame, text=self.plugin.t("extract_certs"), variable=self.extract_certs_var).grid(row=3, column=0, columnspan=2, sticky="w", pady=(5, 0))
-
 
         # === 4. Actions & Logs ===
         action_frame = tk.Frame(main_frame)
@@ -468,6 +586,125 @@ class SignerWindow:
         self.log_area.insert("end", message + "\n")
         self.log_area.see("end")
         self.log_area.config(state="disabled")
+
+    def select_dll_file(self):
+        path = filedialog.askopenfilename(
+            parent=self.root,
+            title=self.plugin.t("select_dll_title"),
+            filetypes=[("DLL Files", "*.dll"), ("All Files", "*.*")],
+            initialdir=os.environ.get("SystemRoot", "C:\\Windows")
+        )
+        if path:
+            self.pkcs11_dll_text.set(path)
+            self.config["pkcs11_dll_path"] = path
+            save_plugin_config(self.config)
+
+    def set_sds_middleware_path(self):
+        path = os.path.normpath("C:/Windows/System32/pkcs11CNG.dll")
+        self.pkcs11_dll_text.set(path)
+        self.config["pkcs11_dll_path"] = path
+        save_plugin_config(self.config)
+        self.log_message(f"Middleware Stormshield sélectionné : {path}")
+
+    def toggle_pin_visibility(self):
+        current_show = self.pin_entry.cget('show')
+        if current_show == '*':
+            self.pin_entry.config(show='')
+        else:
+            self.pin_entry.config(show='*')
+
+    def update_signer_method_ui(self):
+        method = self.signing_method.get()
+        self.config["signing_method"] = method
+        save_plugin_config(self.config)
+        if method == "p12":
+            self.pkcs11_subframe.grid_forget()
+            self.p12_subframe.grid(row=0, column=0, sticky="ew")
+        else:
+            self.p12_subframe.grid_forget()
+            self.pkcs11_subframe.grid(row=0, column=0, sticky="ew")
+
+    def load_smartcard_certificates(self):
+        if not HAS_PKCS11:
+            messagebox.showerror("Error", self.plugin.t("pkcs11_missing"), parent=self.root)
+            return
+
+        dll_path = self.pkcs11_dll_text.get().strip()
+        if not dll_path:
+            messagebox.showerror("Error", self.plugin.t("error_no_dll"), parent=self.root)
+            return
+        if not os.path.exists(dll_path):
+            messagebox.showerror("Error", f"DLL not found: {dll_path}", parent=self.root)
+            return
+
+        pin = self.pkcs11_pin.get().strip()
+        if not pin:
+            messagebox.showerror("Error", self.plugin.t("error_no_pin"), parent=self.root)
+            return
+
+        self.log_message(self.plugin.t("loading_certs"))
+        self.root.config(cursor="watch")
+        self.root.update()
+
+        try:
+            lib = pkcs11.lib(dll_path)
+            tokens = []
+            for slot in lib.get_slots(token_present=True):
+                try:
+                    tokens.append(slot.get_token())
+                except Exception:
+                    pass
+            self.loaded_certificates = []
+            
+            for token in tokens:
+                token_label = token.label or "Unknown Token"
+                try:
+                    with token.open(user_pin=pin) as session:
+                        certs = session.get_objects({pkcs11.Attribute.CLASS: pkcs11.ObjectClass.CERTIFICATE})
+                        for cert in certs:
+                            try:
+                                label = cert[pkcs11.Attribute.LABEL] or "No Label"
+                                cert_id = cert[pkcs11.Attribute.ID]
+                                cert_der = cert[pkcs11.Attribute.VALUE]
+                                
+                                if cert_der:
+                                    # Parse subject CN using cryptography
+                                    x509_cert = x509.load_der_x509_certificate(cert_der, default_backend())
+                                    subject = x509_cert.subject
+                                    cns = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+                                    subject_cn = cns[0].value if cns else "Unknown Subject"
+                                else:
+                                    subject_cn = "Unknown Subject"
+                                
+                                # Store certificate info
+                                self.loaded_certificates.append({
+                                    "token_label": token_label,
+                                    "cert_label": label,
+                                    "subject_cn": subject_cn,
+                                    "id": cert_id,
+                                    "value": cert_der,
+                                    "display_name": f"[{token_label}] {subject_cn} ({label})"
+                                })
+                            except Exception as ce:
+                                self.log_message(f"Error reading certificate object on token '{token_label}': {ce}")
+                except Exception as te:
+                    self.log_message(f"Could not open session or log in to token '{token_label}': {te}")
+            
+            display_names = [c["display_name"] for c in self.loaded_certificates]
+            self.cert_combobox["values"] = display_names
+            if display_names:
+                self.cert_combobox.current(0)
+                self.log_message(self.plugin.t("certs_loaded", len(display_names)))
+            else:
+                self.cert_combobox.set("")
+                self.log_message(self.plugin.t("no_certs_on_card"))
+                messagebox.showwarning("Warning", self.plugin.t("no_certs_on_card"), parent=self.root)
+                
+        except Exception as e:
+            self.log_message(f"Error loading PKCS#11 module: {e}")
+            messagebox.showerror("Error PKCS#11", f"Error: {e}", parent=self.root)
+        finally:
+            self.root.config(cursor="")
 
     def select_p12_file(self):
         path = filedialog.askopenfilename(
@@ -583,9 +820,32 @@ class SignerWindow:
             messagebox.showerror("Error", f"Missing dependencies: {', '.join(MISSING_DEPS)}.\nPlease install them to use this feature.", parent=self.root)
             return
 
-        if not self.p12_file_path:
-            messagebox.showerror("Error", self.plugin.t("error_no_p12"), parent=self.root)
-            return
+        method = self.signing_method.get()
+        
+        if method == "p12":
+            if not self.p12_file_path:
+                messagebox.showerror("Error", self.plugin.t("error_no_p12"), parent=self.root)
+                return
+        else: # pkcs11
+            if not HAS_PKCS11:
+                messagebox.showerror("Error", self.plugin.t("pkcs11_missing"), parent=self.root)
+                return
+            dll_path = self.pkcs11_dll_text.get().strip()
+            if not dll_path:
+                messagebox.showerror("Error", self.plugin.t("error_no_dll"), parent=self.root)
+                return
+            if not os.path.exists(dll_path):
+                messagebox.showerror("Error", f"DLL not found: {dll_path}", parent=self.root)
+                return
+            pin = self.pkcs11_pin.get().strip()
+            if not pin:
+                messagebox.showerror("Error", self.plugin.t("error_no_pin"), parent=self.root)
+                return
+            selected_idx = self.cert_combobox.current()
+            if selected_idx < 0 or not self.loaded_certificates:
+                messagebox.showerror("Error", self.plugin.t("error_no_cert"), parent=self.root)
+                return
+            selected_cert_info = self.loaded_certificates[selected_idx]
         
         # Get content from editor
         editor_content = self.main_app.text.get("1.0", "end-1c")
@@ -616,27 +876,34 @@ class SignerWindow:
             messagebox.showerror("Error", f"Failed to write temp file: {e}", parent=self.root)
             return
 
-        
         try:
-            self.log_message(self.plugin.t("loading_p12"))
-            pwd = self.p12_password_entry.get() or ""
-            if not pwd:
-                pwd = self.prompt_for_p12_password()
-                if pwd is None:
-                    self.log_message(self.plugin.t("sign_cancelled"))
-                    return
-                self.p12_password_entry.delete(0, tk.END)
-                self.p12_password_entry.insert(0, pwd)
-                
-            private_key, cert, additional_certs = load_private_key_from_p12(self.p12_file_path, pwd)
-            pem_key = private_key_to_pem(private_key)
-            jwt_headers = {}
-            if self.include_signer_cert_var.get():
-                x5c_list = cert_to_x5c_list(cert, additional_certs)
-                jwt_headers = {"x5c": x5c_list} if x5c_list else {}
+            if method == "p12":
+                self.log_message(self.plugin.t("loading_p12"))
+                pwd = self.p12_password_entry.get() or ""
+                if not pwd:
+                    pwd = self.prompt_for_p12_password()
+                    if pwd is None:
+                        self.log_message(self.plugin.t("sign_cancelled"))
+                        return
+                    self.p12_password_entry.delete(0, tk.END)
+                    self.p12_password_entry.insert(0, pwd)
+                    
+                private_key, cert, additional_certs = load_private_key_from_p12(self.p12_file_path, pwd)
+                pem_key = private_key_to_pem(private_key)
+                jwt_headers = {}
+                if self.include_signer_cert_var.get():
+                    x5c_list = cert_to_x5c_list(cert, additional_certs)
+                    jwt_headers = {"x5c": x5c_list} if x5c_list else {}
+            else: # pkcs11
+                cert = x509.load_der_x509_certificate(selected_cert_info["value"], default_backend())
+                additional_certs = []
+                jwt_headers = {}
+                if self.include_signer_cert_var.get():
+                    x5c_list = cert_to_x5c_list(cert, additional_certs)
+                    jwt_headers = {"x5c": x5c_list} if x5c_list else {}
         except Exception as e:
             error_trace = traceback.format_exc()
-            messagebox.showerror("Error P12", f"{e}\n\n{error_trace}", parent=self.root)
+            messagebox.showerror("Error Setup Key", f"{e}\n\n{error_trace}", parent=self.root)
             return
 
         algorithm = self.algorithm_choice.get()
@@ -651,7 +918,7 @@ class SignerWindow:
                 output_folder = os.path.join(output_base_dir, json_name)
                 os.makedirs(output_folder, exist_ok=True)
 
-                saved_cert = save_cert_to_cer(cert, self.p12_file_path, output_folder)
+                saved_cert = save_cert_to_cer(cert, None, output_folder)
                 if saved_cert:
                     self.log_message(self.plugin.t("cert_saved_main", saved_cert))
                 else:
@@ -667,7 +934,78 @@ class SignerWindow:
                 if update_policy_date_in_file(copy_path):
                     self.log_message(self.plugin.t("date_updated_in", os.path.basename(copy_path)))
 
-                token = sign_json_file(copy_path, pem_key, headers=jwt_headers, algorithm=algorithm)
+                if method == "p12":
+                    token = sign_json_file(copy_path, pem_key, headers=jwt_headers, algorithm=algorithm)
+                else: # pkcs11
+                    self.log_message(self.plugin.t("signing_pkcs11"))
+                    lib = pkcs11.lib(dll_path)
+                    tokens = []
+                    for slot in lib.get_slots(token_present=True):
+                        try:
+                            tokens.append(slot.get_token())
+                        except Exception:
+                            pass
+                    target_token = None
+                    for tok in tokens:
+                        if tok.label == selected_cert_info["token_label"]:
+                            target_token = tok
+                            break
+                    if not target_token:
+                        raise RuntimeError(f"Token '{selected_cert_info['token_label']}' not found.")
+
+                    with target_token.open(user_pin=pin) as session:
+                        # Find private key matching ID
+                        priv_keys = list(session.get_objects({
+                            pkcs11.Attribute.CLASS: pkcs11.ObjectClass.PRIVATE_KEY,
+                            pkcs11.Attribute.ID: selected_cert_info["id"]
+                        }))
+                        if not priv_keys:
+                            # Try finding by label
+                            priv_keys = list(session.get_objects({
+                                pkcs11.Attribute.CLASS: pkcs11.ObjectClass.PRIVATE_KEY,
+                                pkcs11.Attribute.LABEL: selected_cert_info["cert_label"]
+                            }))
+                        if not priv_keys:
+                            raise RuntimeError(f"Private key for certificate '{selected_cert_info['cert_label']}' not found on token.")
+                        
+                        priv_key_obj = priv_keys[0]
+                        
+                        # Read payload
+                        with open(copy_path, "r", encoding="utf-8") as f:
+                            payload_data = json.load(f)
+                        
+                        headers = {
+                            "alg": algorithm,
+                            "typ": "JWT"
+                        }
+                        if jwt_headers:
+                            headers.update(jwt_headers)
+                            
+                        header_json = json.dumps(headers, separators=(',', ':'))
+                        payload_json = json.dumps(payload_data, separators=(',', ':'))
+                        
+                        header_b64 = base64.urlsafe_b64encode(header_json.encode('utf-8')).decode('utf-8').rstrip('=')
+                        payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
+                        
+                        signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+                        
+                        if algorithm == "RS256":
+                            import hashlib
+                            digest = hashlib.sha256(signing_input).digest()
+                            # ASN.1 DER prefix for SHA-256 DigestInfo
+                            digest_info = b'\x30\x31\x30\x0d\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01\x05\x00\x04\x20' + digest
+                            mechanism = pkcs11.Mechanism.RSA_PKCS
+                            signature = priv_key_obj.sign(digest_info, mechanism=mechanism)
+                        elif algorithm == "PS256":
+                            mechanism = pkcs11.Mechanism.RSA_PKCS_PSS
+                            mechanism_param = (pkcs11.Mechanism.SHA256, pkcs11.MGF.SHA256, 32)
+                            signature = priv_key_obj.sign(signing_input, mechanism=mechanism, mechanism_param=mechanism_param)
+                        else:
+                            raise ValueError(f"Unsupported algorithm: {algorithm}")
+                            
+                        signature_b64 = base64.urlsafe_b64encode(signature).decode('utf-8').rstrip('=')
+                        token = f"{header_b64}.{payload_b64}.{signature_b64}"
+
                 output_path = os.path.join(output_folder, output_filename)
                 with open(output_path, "w", encoding="utf-8") as out_file:
                     out_file.write(token)
@@ -687,7 +1025,8 @@ class SignerWindow:
                         self.log_message(self.plugin.t("certs_extracted_to", certs_folder))
 
             except Exception as e:
-                self.log_message(self.plugin.t("error_for_file", json_file_path, str(e)))
+                error_msg = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+                self.log_message(self.plugin.t("error_for_file", json_file_path, error_msg))
                 error_count += 1
         
         self.log_message(self.plugin.t("signing_summary", success_count, error_count))
