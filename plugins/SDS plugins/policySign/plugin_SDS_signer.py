@@ -50,6 +50,39 @@ try:
     import pkcs11
     from pkcs11 import Mechanism, MGF
     HAS_PKCS11 = True
+    
+    # Patch pkcs11 string attributes to handle non-UTF-8 characters (e.g. latin-1) gracefully
+    try:
+        import pkcs11.attributes
+        
+        def safe_decode(b: bytes) -> str:
+            try:
+                return b.decode("utf-8")
+            except UnicodeDecodeError:
+                try:
+                    return b.decode("latin-1")
+                except Exception:
+                    return b.decode("utf-8", errors="replace")
+                    
+        patched_handle_str = (
+            lambda s: s.encode("utf-8"),
+            safe_decode
+        )
+        
+        # Patch the global attribute definition
+        pkcs11.attributes.handle_str = patched_handle_str
+        
+        # Overwrite in ATTRIBUTE_TYPES map
+        for attr in [
+            pkcs11.Attribute.APPLICATION,
+            pkcs11.Attribute.LABEL,
+            pkcs11.Attribute.UNIQUE_ID,
+            pkcs11.Attribute.URL
+        ]:
+            if attr in pkcs11.attributes.ATTRIBUTE_TYPES:
+                pkcs11.attributes.ATTRIBUTE_TYPES[attr] = patched_handle_str
+    except Exception:
+        pass
 except ImportError:
     pass
 
