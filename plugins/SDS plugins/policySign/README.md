@@ -14,6 +14,7 @@ A comprehensive tool for signing Stormshield Data Security (SDS) policy files us
 - **Deployment Script**: Generates an `install-policy.bat` file to automate the deployment of the signed policy and certificates to standard SDS directories.
 - **Certificate Extraction**: Optional extraction of existing certificates from the JSON policy.
 - **Drag & Drop**: Drop a `.p12` or `.pfx` file directly into the signer window when using the P12 method.
+- **Certificate Details**: Displays the selected certificate's serial number permanently, with an eye button ("👁") to open a detailed, copyable modal listing translated Key Usages, Extended Key Usages, validity dates, subject, and issuer DN.
 
 ### Usage
 1. Open the SDS policy JSON file in the editor.
@@ -40,6 +41,7 @@ Un outil complet pour signer les fichiers de politique Stormshield Data Security
 - **Script de Déploiement** : Génère un fichier `install-policy.bat` pour automatiser le déploiement de la politique signée et des certificats vers les répertoires standards de SDS.
 - **Extraction de Certificats** : Extraction optionnelle des certificats existants depuis la politique JSON.
 - **Glisser-déposer** : Déposez un fichier `.p12` ou `.pfx` directement dans la fenêtre du plugin en mode P12.
+- **Détails du certificat** : Affiche en permanence le numéro de série du certificat sélectionné, avec un bouton œil (« 👁 ») pour ouvrir une popup détaillée et copiable listant les usages de clé (KU/EKU) traduits, les dates de validité, le sujet et le DN de l'émetteur.
 
 ### Utilisation
 1. Ouvrez le fichier JSON de politique SDS dans l'éditeur.

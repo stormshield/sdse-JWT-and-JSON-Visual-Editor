@@ -1,8 +1,8 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0.6  
+**Version:** 2.0.6.1  
 **Author:** Jérôme BLONDEL  
-**Last Update:** 15/07/2026  
+**Last Update:** 16/07/2026  
 **Source:** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Screenshots
@@ -138,13 +138,14 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 ## Changelog
 
-### v2.0.6 — 15/07/2026
+### v2.0.6.1 — 16/07/2026
 
 *   **SDS Policy Signer — Smart Card (PKCS#11) support:** Added capability to sign policies using a smart card. Users can specify a PKCS#11 middleware DLL, input their PIN, load, list and select certificates from the card.
+*   **SDS Policy Signer — Certificate Metadata Display:** Added an eye button ("👁") next to the certificate selector to view all details (Serial Number, Issuer CN & DN, Validity Dates, Key Usage, Extended Key Usage) in a clean, scrollable popup, with all KU/EKU values fully translated. A permanent label displays the certificate's Serial Number directly under the dropdown.
 *   **SDS Policy Signer — Stormshield Middleware shortcut:** Added a button to quickly target the Stormshield PKCS#11 DLL (`C:\Windows\System32\pkcs11CNG.dll`).
 *   **SDS Policy Signer — Unified Settings:** Plugin parameters are stored directly in the main `settings.json` file.
 *   **SDS Policy Signer — Signing compatibility:** Pre-hash data and use the standard `Mechanism.RSA_PKCS` to ensure compatibility with smart cards that do not support on-chip hashing.
-
+*   **Version bump:** Updated version number to 2.0.6.1.
 ### v2.0.5 — 05/06/2026
 
 *   **About dialog — Version bump:** Updated version number to 2.0.5 in the About dialog.
@@ -170,9 +171,9 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0.6  
+**Version :** 2.0.6.1  
 **Auteur :** Jérôme BLONDEL  
-**Dernière mise à jour :** 15/07/2026  
+**Dernière mise à jour :** 16/07/2026  
 **Source :** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Description
@@ -303,12 +304,14 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 
 ## Changelog
 
-### v2.0.6 — 15/07/2026
+### v2.0.6.1 — 16/07/2026
 
 *   **Signataire de politique SDS — Support de carte à puce (PKCS#11) :** Ajout de la possibilité de signer des politiques avec une carte à puce. Les utilisateurs peuvent spécifier une DLL de middleware PKCS#11, saisir le code PIN, charger, lister et sélectionner des certificats de la carte.
+*   **Signataire de politique SDS — Affichage des métadonnées du certificat :** Ajout d'un bouton œil ("👁") à côté du sélecteur de certificat pour visualiser tous les détails (Numéro de série, Émetteur CN & DN, Dates de validité, Key Usage, Extended Key Usage) dans une popup propre et défilante, avec traduction automatique des valeurs KU/EKU. Un label permanent affiche le numéro de série du certificat sous le sélecteur.
 *   **Signataire de politique SDS — Raccourci Middleware Stormshield :** Ajout d'un bouton pour cibler rapidement la DLL PKCS#11 Stormshield (`C:\Windows\System32\pkcs11CNG.dll`).
 *   **Signataire de politique SDS — Paramètres unifiés :** Les paramètres du plugin sont sauvegardés directement dans le fichier `settings.json` principal.
 *   **Signataire de politique SDS — Compatibilité de signature :** Hachage des données côté client et utilisation du mécanisme standard `Mechanism.RSA_PKCS` pour assurer une compatibilité optimale avec les cartes qui ne supportent pas le hachage interne.
+*   **Mise à jour de version :** Numéro de version mis à jour en 2.0.6.1.
 
 ### v2.0.5 — 05/06/2026
 

@@ -530,8 +530,20 @@ class SignerWindow:
         
         # Certificate Selector
         tk.Label(self.pkcs11_subframe, text=self.plugin.t("select_cert_label")).grid(row=2, column=0, sticky="w", padx=(0, 5), pady=(5, 0))
-        self.cert_combobox = ttk.Combobox(self.pkcs11_subframe, state="readonly", width=50)
-        self.cert_combobox.grid(row=2, column=1, columnspan=2, sticky="ew", pady=(5, 0))
+        
+        cert_container = tk.Frame(self.pkcs11_subframe)
+        cert_container.grid(row=2, column=1, columnspan=2, sticky="ew", pady=(5, 0))
+        
+        self.cert_combobox = ttk.Combobox(cert_container, state="readonly", width=45)
+        self.cert_combobox.pack(side="left", fill="x", expand=True)
+        self.cert_combobox.bind("<<ComboboxSelected>>", self.on_cert_selected)
+        
+        self.show_cert_btn = tk.Button(cert_container, text="👁", width=3, command=self.show_certificate_details)
+        self.show_cert_btn.pack(side="left", padx=(5, 0))
+
+        # Certificate serial display label
+        self.cert_serial_label = tk.Label(self.pkcs11_subframe, text="", justify="left", anchor="w", fg="#005A9E", font=("Consolas", 9))
+        self.cert_serial_label.grid(row=3, column=1, columnspan=2, sticky="w", pady=(2, 0))
 
         signer_frame.columnconfigure(1, weight=1)
 
@@ -673,8 +685,75 @@ class SignerWindow:
                                     subject = x509_cert.subject
                                     cns = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
                                     subject_cn = cns[0].value if cns else "Unknown Subject"
+                                    
+                                    # Extract Serial Number (hex formatted with colons)
+                                    serial_val = f"{x509_cert.serial_number:X}"
+                                    if len(serial_val) % 2 != 0:
+                                        serial_val = "0" + serial_val
+                                    serial_str = ":".join(serial_val[i:i+2] for i in range(0, len(serial_val), 2))
+                                    
+                                    # Extract Key Usage (KU) keys
+                                    ku_keys = []
+                                    try:
+                                        ku_ext = x509_cert.extensions.get_extension_for_class(x509.KeyUsage).value
+                                        if ku_ext.digital_signature: ku_keys.append("ku_digital_signature")
+                                        if ku_ext.content_commitment: ku_keys.append("ku_non_repudiation")
+                                        if ku_ext.key_encipherment: ku_keys.append("ku_key_encipherment")
+                                        if ku_ext.data_encipherment: ku_keys.append("ku_data_encipherment")
+                                        if ku_ext.key_agreement: ku_keys.append("ku_key_agreement")
+                                        if ku_ext.key_cert_sign: ku_keys.append("ku_key_cert_sign")
+                                        if ku_ext.crl_sign: ku_keys.append("ku_crl_sign")
+                                        if ku_ext.encipher_only: ku_keys.append("ku_encipher_only")
+                                        if ku_ext.decipher_only: ku_keys.append("ku_decipher_only")
+                                    except Exception:
+                                        pass
+                                    
+                                    # Extract Extended Key Usage (EKU) keys
+                                    eku_keys = []
+                                    try:
+                                        eku_ext = x509_cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
+                                        oid_map = {
+                                            "1.3.6.1.5.5.7.3.1": "eku_server_auth",
+                                            "1.3.6.1.5.5.7.3.2": "eku_client_auth",
+                                            "1.3.6.1.5.5.7.3.3": "eku_code_signing",
+                                            "1.3.6.1.5.5.7.3.4": "eku_email_protection",
+                                            "1.3.6.1.5.5.7.3.8": "eku_time_stamping",
+                                            "1.3.6.1.5.5.7.3.9": "eku_ocsp_signing",
+                                            "1.3.6.1.4.1.311.20.2.2": "eku_smartcard_logon"
+                                        }
+                                        for oid in eku_ext:
+                                            dotted = oid.dotted_string
+                                            eku_keys.append(oid_map.get(dotted, dotted))
+                                    except Exception:
+                                        pass
+                                    
+                                    # Extract Validity Dates
+                                    try:
+                                        nvb = getattr(x509_cert, "not_valid_before_utc", None) or x509_cert.not_valid_before
+                                        nva = getattr(x509_cert, "not_valid_after_utc", None) or x509_cert.not_valid_after
+                                        nvb_str = nvb.strftime("%Y-%m-%d %H:%M:%S")
+                                        nva_str = nva.strftime("%Y-%m-%d %H:%M:%S")
+                                    except Exception:
+                                        nvb_str = "Unknown"
+                                        nva_str = "Unknown"
+                                    # Extract Issuer
+                                    try:
+                                        issuer = x509_cert.issuer
+                                        issuer_cns = issuer.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+                                        issuer_cn = issuer_cns[0].value if issuer_cns else "Unknown Issuer"
+                                        issuer_dn = issuer.rfc4514_string()
+                                    except Exception:
+                                        issuer_cn = "Unknown Issuer"
+                                        issuer_dn = "Unknown"
                                 else:
                                     subject_cn = "Unknown Subject"
+                                    serial_str = "Unknown"
+                                    ku_keys = []
+                                    eku_keys = []
+                                    nvb_str = "Unknown"
+                                    nva_str = "Unknown"
+                                    issuer_cn = "Unknown Issuer"
+                                    issuer_dn = "Unknown"
                                 
                                 # Store certificate info
                                 self.loaded_certificates.append({
@@ -683,20 +762,29 @@ class SignerWindow:
                                     "subject_cn": subject_cn,
                                     "id": cert_id,
                                     "value": cert_der,
-                                    "display_name": f"[{token_label}] {subject_cn} ({label})"
+                                    "display_name": f"[{token_label}] {subject_cn} ({label})",
+                                    "serial": serial_str,
+                                    "ku_keys": ku_keys,
+                                    "eku_keys": eku_keys,
+                                    "valid_from": nvb_str,
+                                    "valid_to": nva_str,
+                                    "issuer_cn": issuer_cn,
+                                    "issuer_dn": issuer_dn
                                 })
                             except Exception as ce:
                                 self.log_message(f"Error reading certificate object on token '{token_label}': {ce}")
                 except Exception as te:
-                    self.log_message(f"Could not open session or log in to token '{token_label}': {te}")
-            
+                     self.log_message(f"Could not open session or log in to token '{token_label}': {te}")
+             
             display_names = [c["display_name"] for c in self.loaded_certificates]
             self.cert_combobox["values"] = display_names
             if display_names:
                 self.cert_combobox.current(0)
+                self.on_cert_selected()
                 self.log_message(self.plugin.t("certs_loaded", len(display_names)))
             else:
                 self.cert_combobox.set("")
+                self.cert_serial_label.config(text="")
                 self.log_message(self.plugin.t("no_certs_on_card"))
                 messagebox.showwarning("Warning", self.plugin.t("no_certs_on_card"), parent=self.root)
                 
@@ -705,6 +793,81 @@ class SignerWindow:
             messagebox.showerror("Error PKCS#11", f"Error: {e}", parent=self.root)
         finally:
             self.root.config(cursor="")
+
+    def show_certificate_details(self):
+        selected_idx = self.cert_combobox.current()
+        if selected_idx < 0 or selected_idx >= len(self.loaded_certificates):
+            messagebox.showwarning("Warning", self.plugin.t("error_no_cert"), parent=self.root)
+            return
+            
+        cert_info = self.loaded_certificates[selected_idx]
+        
+        # Translate KU keys
+        ku_keys = cert_info.get("ku_keys", [])
+        translated_ku = [self.plugin.t(k) for k in ku_keys]
+        ku_str = ", ".join(translated_ku) if translated_ku else self.plugin.t("none_val")
+        
+        # Translate EKU keys
+        eku_keys = cert_info.get("eku_keys", [])
+        translated_eku = [self.plugin.t(k) if k.startswith("eku_") else k for k in eku_keys]
+        eku_str = ", ".join(translated_eku) if translated_eku else self.plugin.t("none_val")
+
+        details = (
+            f"{self.plugin.t('serial_label')} {cert_info.get('serial', 'Unknown')}\n\n"
+            f"Subject (CN):\n  {cert_info.get('subject_cn', 'Unknown')}\n\n"
+            f"Label:\n  {cert_info.get('cert_label', 'Unknown')}\n\n"
+            f"{self.plugin.t('issuer_label')} {cert_info.get('issuer_cn', 'Unknown')}\n"
+            f"  DN: {cert_info.get('issuer_dn', 'Unknown')}\n\n"
+            f"{self.plugin.t('validity_label')} {cert_info.get('valid_from', 'Unknown')} -> {cert_info.get('valid_to', 'Unknown')}\n\n"
+            f"{self.plugin.t('ku_label')} {ku_str}\n\n"
+            f"{self.plugin.t('eku_label')} {eku_str}"
+        )
+        
+        detail_win = tk.Toplevel(self.root)
+        detail_win.title(self.plugin.t("cert_details_title"))
+        detail_win.geometry("500x425")
+        detail_win.transient(self.root)
+        detail_win.grab_set()
+        detail_win.resizable(True, True)
+        
+        frame = tk.Frame(detail_win, padx=10, pady=10)
+        frame.pack(fill="both", expand=True)
+        
+        scrollbar = ttk.Scrollbar(frame)
+        scrollbar.pack(side="right", fill="y")
+        
+        txt = tk.Text(frame, wrap="word", font=("Consolas", 10), yscrollcommand=scrollbar.set, bg="#F3F3F3", fg="#333333")
+        txt.pack(side="left", fill="both", expand=True)
+        scrollbar.config(command=txt.yview)
+        
+        txt.insert("1.0", details)
+        txt.config(state="disabled")
+        
+        btn_frame = tk.Frame(detail_win, pady=5)
+        btn_frame.pack(fill="x")
+        ttk.Button(btn_frame, text="OK", command=detail_win.destroy).pack()
+        
+        detail_win.update_idletasks()
+        parent_x = self.root.winfo_x()
+        parent_y = self.root.winfo_y()
+        parent_w = self.root.winfo_width()
+        parent_h = self.root.winfo_height()
+        
+        win_w = detail_win.winfo_width()
+        win_h = detail_win.winfo_height()
+        
+        x = parent_x + (parent_w - win_w) // 2
+        y = parent_y + (parent_h - win_h) // 2
+        detail_win.geometry(f"+{x}+{y}")
+
+    def on_cert_selected(self, event=None):
+        selected_idx = self.cert_combobox.current()
+        if selected_idx >= 0 and selected_idx < len(self.loaded_certificates):
+            cert_info = self.loaded_certificates[selected_idx]
+            serial = cert_info.get("serial", "Unknown")
+            self.cert_serial_label.config(text=f"{self.plugin.t('serial_label')} {serial}")
+        else:
+            self.cert_serial_label.config(text="")
 
     def select_p12_file(self):
         path = filedialog.askopenfilename(
