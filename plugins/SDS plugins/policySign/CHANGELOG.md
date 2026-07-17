@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-16 (v2.0.7)
+- Added Microsoft Certificate Store (CAPI/CNG) signature support.
+- Added dropdown to list and select active certificates from the Windows store (CurrentUser and LocalMachine personal stores).
+- Windows certificates are automatically parsed and their full metadata (Subject CN, Thumbprint, Issuer CN & DN, Validity Dates, Key Usage, and Extended Key Usage) is viewable via the detail eye button ("👁").
+- Signing uses native PowerShell/.NET script execution, which natively prompts for Windows PIN / security confirmation if a smart card or TPM key is chosen, and does not require any third-party Python modules.
+- Updated version number to 2.0.7.
+
 ## 2026-07-16 (v2.0.6.1)
 - Added smart card (PKCS#11) signature support.
 - Added input fields for middleware DLL path and card PIN code.

@@ -472,6 +472,7 @@ class SignerWindow:
         self.pkcs11_dll_text = tk.StringVar(value=self.pkcs11_dll_path)
         self.pkcs11_pin = tk.StringVar()
         self.loaded_certificates = [] # list of dicts: {"slot": slot, "label": label, "subject": subject, "id": cert_id, "cert": cert_obj}
+        self.loaded_win_certificates = [] # list of dicts: {"subject_cn": cn, "thumbprint": thumbprint, "serial": serial, "issuer_cn": issuer, "valid_from": from, "valid_to": to, "cert_der_b64": der, ...}
 
         self.create_ui()
 
@@ -483,8 +484,10 @@ class SignerWindow:
         self.update_signer_method_ui()
         if self.signing_method.get() == "p12":
             self.p12_password_entry.focus_set()
-        else:
+        elif self.signing_method.get() == "pkcs11":
             self.pin_entry.focus_set()
+        else:
+            self.win_cert_combobox.focus_set()
 
     def create_ui(self):
         main_frame = tk.Frame(self.root, padx=10, pady=10)
@@ -505,6 +508,9 @@ class SignerWindow:
         
         self.r_pkcs11 = tk.Radiobutton(method_container, text=self.plugin.t("method_pkcs11"), variable=self.signing_method, value="pkcs11", command=self.update_signer_method_ui)
         self.r_pkcs11.pack(side="left")
+        
+        self.r_mscstore = tk.Radiobutton(method_container, text=self.plugin.t("method_mscstore"), variable=self.signing_method, value="mscstore", command=self.update_signer_method_ui)
+        self.r_mscstore.pack(side="left", padx=(10, 0))
 
         # Container for changing frames
         self.method_details_frame = tk.Frame(signer_frame)
@@ -577,6 +583,30 @@ class SignerWindow:
         # Certificate serial display label
         self.cert_serial_label = tk.Label(self.pkcs11_subframe, text="", justify="left", anchor="w", fg="#005A9E", font=("Consolas", 9))
         self.cert_serial_label.grid(row=3, column=1, columnspan=2, sticky="w", pady=(2, 0))
+
+        # Subframe C: MSCSTORE (Windows Certificate Store)
+        self.mscstore_subframe = tk.Frame(self.method_details_frame)
+        self.mscstore_subframe.columnconfigure(1, weight=1)
+
+        # Certificate Selector
+        tk.Label(self.mscstore_subframe, text=self.plugin.t("select_cert_label")).grid(row=0, column=0, sticky="w", padx=(0, 5))
+        
+        win_cert_container = tk.Frame(self.mscstore_subframe)
+        win_cert_container.grid(row=0, column=1, columnspan=2, sticky="ew")
+        
+        self.win_cert_combobox = ttk.Combobox(win_cert_container, state="readonly", width=45)
+        self.win_cert_combobox.pack(side="left", fill="x", expand=True)
+        self.win_cert_combobox.bind("<<ComboboxSelected>>", self.on_win_cert_selected)
+        
+        self.show_win_cert_btn = tk.Button(win_cert_container, text="👁", width=3, command=self.show_win_certificate_details)
+        self.show_win_cert_btn.pack(side="left", padx=(5, 0))
+
+        self.load_win_certs_btn = ttk.Button(self.mscstore_subframe, text=self.plugin.t("load_certs_btn"), command=self.load_windows_certificates)
+        self.load_win_certs_btn.grid(row=0, column=3, sticky="w", padx=(5, 0))
+
+        # Certificate serial display label
+        self.win_cert_serial_label = tk.Label(self.mscstore_subframe, text="", justify="left", anchor="w", fg="#005A9E", font=("Consolas", 9))
+        self.win_cert_serial_label.grid(row=1, column=1, columnspan=2, sticky="w", pady=(2, 0))
 
         signer_frame.columnconfigure(1, weight=1)
 
@@ -664,10 +694,16 @@ class SignerWindow:
         save_plugin_config(self.config)
         if method == "p12":
             self.pkcs11_subframe.grid_forget()
+            self.mscstore_subframe.grid_forget()
             self.p12_subframe.grid(row=0, column=0, sticky="ew")
+        elif method == "pkcs11":
+            self.p12_subframe.grid_forget()
+            self.mscstore_subframe.grid_forget()
+            self.pkcs11_subframe.grid(row=0, column=0, sticky="ew")
         else:
             self.p12_subframe.grid_forget()
-            self.pkcs11_subframe.grid(row=0, column=0, sticky="ew")
+            self.pkcs11_subframe.grid_forget()
+            self.mscstore_subframe.grid(row=0, column=0, sticky="ew")
 
     def load_smartcard_certificates(self):
         if not HAS_PKCS11:
@@ -902,6 +938,247 @@ class SignerWindow:
         else:
             self.cert_serial_label.config(text="")
 
+    def on_win_cert_selected(self, event=None):
+        selected_idx = self.win_cert_combobox.current()
+        if selected_idx >= 0 and selected_idx < len(self.loaded_win_certificates):
+            cert_info = self.loaded_win_certificates[selected_idx]
+            serial = cert_info.get("serial", "Unknown")
+            self.win_cert_serial_label.config(text=f"{self.plugin.t('serial_label')} {serial}")
+        else:
+            self.win_cert_serial_label.config(text="")
+
+    def show_win_certificate_details(self):
+        selected_idx = self.win_cert_combobox.current()
+        if selected_idx < 0 or selected_idx >= len(self.loaded_win_certificates):
+            messagebox.showwarning("Warning", self.plugin.t("error_no_cert_win"), parent=self.root)
+            return
+            
+        cert_info = self.loaded_win_certificates[selected_idx]
+        
+        # Translate KU keys
+        ku_keys = cert_info.get("ku_keys", [])
+        translated_ku = [self.plugin.t(k) for k in ku_keys]
+        ku_str = ", ".join(translated_ku) if translated_ku else self.plugin.t("none_val")
+        
+        # Translate EKU keys
+        eku_keys = cert_info.get("eku_keys", [])
+        translated_eku = [self.plugin.t(k) if k.startswith("eku_") else k for k in eku_keys]
+        eku_str = ", ".join(translated_eku) if translated_eku else self.plugin.t("none_val")
+
+        details = (
+            f"{self.plugin.t('serial_label')} {cert_info.get('serial', 'Unknown')}\n\n"
+            f"Subject (CN):\n  {cert_info.get('subject_cn', 'Unknown')}\n\n"
+            f"Thumbprint:\n  {cert_info.get('thumbprint', 'Unknown')}\n\n"
+            f"{self.plugin.t('issuer_label')} {cert_info.get('issuer_cn', 'Unknown')}\n"
+            f"  DN: {cert_info.get('issuer_dn', 'Unknown')}\n\n"
+            f"{self.plugin.t('validity_label')} {cert_info.get('valid_from', 'Unknown')} -> {cert_info.get('valid_to', 'Unknown')}\n\n"
+            f"{self.plugin.t('ku_label')} {ku_str}\n\n"
+            f"{self.plugin.t('eku_label')} {eku_str}"
+        )
+        
+        detail_win = tk.Toplevel(self.root)
+        detail_win.title(self.plugin.t("cert_details_title"))
+        detail_win.geometry("500x425")
+        detail_win.transient(self.root)
+        detail_win.grab_set()
+        detail_win.resizable(True, True)
+        
+        frame = tk.Frame(detail_win, padx=10, pady=10)
+        frame.pack(fill="both", expand=True)
+        
+        scrollbar = ttk.Scrollbar(frame)
+        scrollbar.pack(side="right", fill="y")
+        
+        txt = tk.Text(frame, wrap="word", font=("Consolas", 10), yscrollcommand=scrollbar.set, bg="#F3F3F3", fg="#333333")
+        txt.pack(side="left", fill="both", expand=True)
+        scrollbar.config(command=txt.yview)
+        
+        txt.insert("1.0", details)
+        txt.config(state="disabled")
+        
+        btn_frame = tk.Frame(detail_win, pady=5)
+        btn_frame.pack(fill="x")
+        ttk.Button(btn_frame, text="OK", command=detail_win.destroy).pack()
+        
+        detail_win.update_idletasks()
+        parent_x = self.root.winfo_x()
+        parent_y = self.root.winfo_y()
+        parent_w = self.root.winfo_width()
+        parent_h = self.root.winfo_height()
+        
+        win_w = detail_win.winfo_width()
+        win_h = detail_win.winfo_height()
+        
+        x = parent_x + (parent_w - win_w) // 2
+        y = parent_y + (parent_h - win_h) // 2
+        detail_win.geometry(f"+{x}+{y}")
+
+    def load_windows_certificates(self):
+        self.log_message(self.plugin.t("loading_certs_win"))
+        self.root.config(cursor="watch")
+        self.root.update()
+
+        try:
+            # PowerShell command to fetch all certs with private key from CurrentUser\My and LocalMachine\My
+            ps_script = """
+            $ErrorActionPreference = 'Stop'
+            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            $certs = @()
+            $certs += Get-ChildItem -Path Cert:\\CurrentUser\\My -ErrorAction SilentlyContinue | Where-Object { $_.HasPrivateKey }
+            $certs += Get-ChildItem -Path Cert:\\LocalMachine\\My -ErrorAction SilentlyContinue | Where-Object { $_.HasPrivateKey }
+            $output = @()
+            $certs | ForEach-Object {
+                try {
+                    $certBytes = $_.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert)
+                    $certDerB64 = [System.Convert]::ToBase64String($certBytes)
+                    $output += [PSCustomObject]@{
+                        Subject = $_.Subject
+                        Thumbprint = $_.Thumbprint
+                        SerialNumber = $_.SerialNumber
+                        Issuer = $_.Issuer
+                        NotBefore = $_.NotBefore.ToString("yyyy-MM-dd HH:mm:ss")
+                        NotAfter = $_.NotAfter.ToString("yyyy-MM-dd HH:mm:ss")
+                        CertDerB64 = $certDerB64
+                    }
+                } catch {}
+            }
+            if ($output.Count -gt 0) {
+                $output | ConvertTo-Json -Compress
+            }
+            """
+            
+            import subprocess
+            encoded_script = base64.b64encode(ps_script.encode('utf-16-le')).decode('ascii')
+            
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded_script],
+                capture_output=True
+            )
+            
+            self.loaded_win_certificates = []
+            
+            stdout_str = result.stdout.decode('utf-8', errors='replace') if result.stdout else ""
+            stderr_str = result.stderr.decode('utf-8', errors='replace') if result.stderr else ""
+            
+            if result.returncode == 0 and stdout_str.strip():
+                try:
+                    data = json.loads(stdout_str.strip())
+                    if isinstance(data, dict):
+                        raw_certs = [data]
+                    else:
+                        raw_certs = data
+                except Exception:
+                    raw_certs = []
+                    
+                for item in raw_certs:
+                    thumbprint = item.get("Thumbprint")
+                    cert_der_b64 = item.get("CertDerB64")
+                    if not thumbprint or not cert_der_b64:
+                        continue
+                    
+                    try:
+                        cert_der = base64.b64decode(cert_der_b64)
+                        x509_cert = x509.load_der_x509_certificate(cert_der, default_backend())
+                        
+                        subject = x509_cert.subject
+                        cns = subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+                        subject_cn = cns[0].value if cns else "Unknown Subject"
+                        
+                        serial_val = f"{x509_cert.serial_number:X}"
+                        if len(serial_val) % 2 != 0:
+                            serial_val = "0" + serial_val
+                        serial_str = ":".join(serial_val[i:i+2] for i in range(0, len(serial_val), 2))
+                        
+                        # Key Usage (KU)
+                        ku_keys = []
+                        try:
+                            ku_ext = x509_cert.extensions.get_extension_for_class(x509.KeyUsage).value
+                            if ku_ext.digital_signature: ku_keys.append("ku_digital_signature")
+                            if ku_ext.content_commitment: ku_keys.append("ku_non_repudiation")
+                            if ku_ext.key_encipherment: ku_keys.append("ku_key_encipherment")
+                            if ku_ext.data_encipherment: ku_keys.append("ku_data_encipherment")
+                            if ku_ext.key_agreement: ku_keys.append("ku_key_agreement")
+                            if ku_ext.key_cert_sign: ku_keys.append("ku_key_cert_sign")
+                            if ku_ext.crl_sign: ku_keys.append("ku_crl_sign")
+                            if ku_ext.encipher_only: ku_keys.append("ku_encipher_only")
+                            if ku_ext.decipher_only: ku_keys.append("ku_decipher_only")
+                        except Exception:
+                            pass
+                        
+                        # Extended Key Usage (EKU)
+                        eku_keys = []
+                        try:
+                            eku_ext = x509_cert.extensions.get_extension_for_class(x509.ExtendedKeyUsage).value
+                            oid_map = {
+                                "1.3.6.1.5.5.7.3.1": "eku_server_auth",
+                                "1.3.6.1.5.5.7.3.2": "eku_client_auth",
+                                "1.3.6.1.5.5.7.3.3": "eku_code_signing",
+                                "1.3.6.1.5.5.7.3.4": "eku_email_protection",
+                                "1.3.6.1.5.5.7.3.8": "eku_time_stamping",
+                                "1.3.6.1.5.5.7.3.9": "eku_ocsp_signing",
+                                "1.3.6.1.4.1.311.20.2.2": "eku_smartcard_logon"
+                            }
+                            for oid in eku_ext:
+                                dotted = oid.dotted_string
+                                eku_keys.append(oid_map.get(dotted, dotted))
+                        except Exception:
+                            pass
+                        
+                        # Validity Dates
+                        try:
+                            nvb = getattr(x509_cert, "not_valid_before_utc", None) or x509_cert.not_valid_before
+                            nva = getattr(x509_cert, "not_valid_after_utc", None) or x509_cert.not_valid_after
+                            nvb_str = nvb.strftime("%Y-%m-%d %H:%M:%S")
+                            nva_str = nva.strftime("%Y-%m-%d %H:%M:%S")
+                        except Exception:
+                            nvb_str = "Unknown"
+                            nva_str = "Unknown"
+                            
+                        # Issuer
+                        try:
+                            issuer = x509_cert.issuer
+                            issuer_cns = issuer.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+                            issuer_cn = issuer_cns[0].value if issuer_cns else "Unknown Issuer"
+                            issuer_dn = issuer.rfc4514_string()
+                        except Exception:
+                            issuer_cn = "Unknown Issuer"
+                            issuer_dn = "Unknown"
+                            
+                        self.loaded_win_certificates.append({
+                            "subject_cn": subject_cn,
+                            "thumbprint": thumbprint,
+                            "serial": serial_str,
+                            "ku_keys": ku_keys,
+                            "eku_keys": eku_keys,
+                            "valid_from": nvb_str,
+                            "valid_to": nva_str,
+                            "issuer_cn": issuer_cn,
+                            "issuer_dn": issuer_dn,
+                            "cert_der_b64": cert_der_b64,
+                            "value": cert_der, # Raw DER bytes for consistency
+                            "display_name": f"{subject_cn} ({serial_str[:8]}...)"
+                        })
+                    except Exception as ex:
+                        self.log_message(f"Error parsing certificate {thumbprint}: {ex}")
+            
+            display_names = [c["display_name"] for c in self.loaded_win_certificates]
+            self.win_cert_combobox["values"] = display_names
+            if display_names:
+                self.win_cert_combobox.current(0)
+                self.on_win_cert_selected()
+                self.log_message(self.plugin.t("certs_loaded", len(display_names)))
+            else:
+                self.win_cert_combobox.set("")
+                self.win_cert_serial_label.config(text="")
+                self.log_message(self.plugin.t("no_certs_in_win"))
+                messagebox.showwarning("Warning", self.plugin.t("no_certs_in_win"), parent=self.root)
+                
+        except Exception as e:
+            self.log_message(f"Error loading Windows Certificates: {e}")
+            messagebox.showerror("Error Windows Store", f"Error: {e}", parent=self.root)
+        finally:
+            self.root.config(cursor="")
+
     def select_p12_file(self):
         path = filedialog.askopenfilename(
             parent=self.root,
@@ -1011,6 +1288,77 @@ class SignerWindow:
         except Exception:
             return None
 
+    def sign_with_windows_store(self, thumbprint, data_bytes, algorithm="RS256"):
+        if algorithm == "RS256":
+            padding = "[System.Security.Cryptography.RSASignaturePadding]::Pkcs1"
+        elif algorithm == "PS256":
+            padding = "[System.Security.Cryptography.RSASignaturePadding]::Pss"
+        else:
+            raise ValueError(f"Unsupported algorithm: {algorithm}")
+            
+        import tempfile
+        import os
+        
+        # Write data_bytes to a temporary file to avoid WinError 206 command line length limits
+        fd, temp_data_path = tempfile.mkstemp(suffix=".dat")
+        try:
+            with os.fdopen(fd, 'wb') as f:
+                f.write(data_bytes)
+                
+            # Normalize path for PowerShell
+            temp_data_path_ps = temp_data_path.replace("\\", "\\\\")
+            
+            ps_script = f"""
+            $ErrorActionPreference = 'Stop'
+            [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+            try {{
+                $thumbprint = '{thumbprint}'
+                $tempPath = '{temp_data_path_ps}'
+                
+                $dataBytes = [System.IO.File]::ReadAllBytes($tempPath)
+                
+                $cert = Get-Item -Path "Cert:\\CurrentUser\\My\\$thumbprint" -ErrorAction SilentlyContinue
+                if (-not $cert) {{
+                    $cert = Get-Item -Path "Cert:\\LocalMachine\\My\\$thumbprint" -ErrorAction Stop
+                }}
+                
+                $rsa = [System.Security.Cryptography.X509Certificates.RSACertificateExtensions]::GetRSAPrivateKey($cert)
+                if (-not $rsa) {{
+                    throw "No RSA private key associated with certificate or key not accessible."
+                }}
+                
+                $sigBytes = $rsa.SignData($dataBytes, [System.Security.Cryptography.HashAlgorithmName]::SHA256, {padding})
+                $sigB64 = [System.Convert]::ToBase64String($sigBytes)
+                Write-Output $sigB64
+            }} catch {{
+                Write-Error $_.Exception.Message
+                exit 1
+            }}
+            """
+            
+            import base64
+            encoded_script = base64.b64encode(ps_script.encode('utf-16-le')).decode('ascii')
+            
+            import subprocess
+            result = subprocess.run(
+                ["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encoded_script],
+                capture_output=True
+            )
+            
+            stdout_str = result.stdout.decode('utf-8', errors='replace') if result.stdout else ""
+            stderr_str = result.stderr.decode('utf-8', errors='replace') if result.stderr else ""
+            
+            if result.returncode != 0:
+                raise RuntimeError(f"PowerShell signing error: {stderr_str.strip()}")
+                
+            sig_b64 = stdout_str.strip()
+            return base64.b64decode(sig_b64)
+        finally:
+            try:
+                os.remove(temp_data_path)
+            except Exception:
+                pass
+
     def apply_modifications_and_sign(self):
         if MISSING_DEPS:
             messagebox.showerror("Error", f"Missing dependencies: {', '.join(MISSING_DEPS)}.\nPlease install them to use this feature.", parent=self.root)
@@ -1022,6 +1370,12 @@ class SignerWindow:
             if not self.p12_file_path:
                 messagebox.showerror("Error", self.plugin.t("error_no_p12"), parent=self.root)
                 return
+        elif method == "mscstore":
+            selected_idx = self.win_cert_combobox.current()
+            if selected_idx < 0 or not self.loaded_win_certificates:
+                messagebox.showerror("Error", self.plugin.t("error_no_cert_win"), parent=self.root)
+                return
+            selected_cert_info = self.loaded_win_certificates[selected_idx]
         else: # pkcs11
             if not HAS_PKCS11:
                 messagebox.showerror("Error", self.plugin.t("pkcs11_missing"), parent=self.root)
@@ -1090,6 +1444,13 @@ class SignerWindow:
                 if self.include_signer_cert_var.get():
                     x5c_list = cert_to_x5c_list(cert, additional_certs)
                     jwt_headers = {"x5c": x5c_list} if x5c_list else {}
+            elif method == "mscstore":
+                cert = x509.load_der_x509_certificate(selected_cert_info["value"], default_backend())
+                additional_certs = []
+                jwt_headers = {}
+                if self.include_signer_cert_var.get():
+                    x5c_list = cert_to_x5c_list(cert, additional_certs)
+                    jwt_headers = {"x5c": x5c_list} if x5c_list else {}
             else: # pkcs11
                 cert = x509.load_der_x509_certificate(selected_cert_info["value"], default_backend())
                 additional_certs = []
@@ -1132,6 +1493,35 @@ class SignerWindow:
 
                 if method == "p12":
                     token = sign_json_file(copy_path, pem_key, headers=jwt_headers, algorithm=algorithm)
+                elif method == "mscstore":
+                    self.log_message("Signature avec le magasin de certificats Windows...")
+                    
+                    with open(copy_path, "r", encoding="utf-8") as f:
+                        payload_data = json.load(f)
+                    
+                    headers = {
+                        "alg": algorithm,
+                        "typ": "JWT"
+                    }
+                    if jwt_headers:
+                        headers.update(jwt_headers)
+                        
+                    header_json = json.dumps(headers, separators=(',', ':'))
+                    payload_json = json.dumps(payload_data, separators=(',', ':'))
+                    
+                    header_b64 = base64.urlsafe_b64encode(header_json.encode('utf-8')).decode('utf-8').rstrip('=')
+                    payload_b64 = base64.urlsafe_b64encode(payload_json.encode('utf-8')).decode('utf-8').rstrip('=')
+                    
+                    signing_input = f"{header_b64}.{payload_b64}".encode('utf-8')
+                    
+                    signature = self.sign_with_windows_store(
+                        selected_cert_info["thumbprint"],
+                        signing_input,
+                        algorithm=algorithm
+                    )
+                    
+                    signature_b64 = base64.urlsafe_b64encode(signature).decode('utf-8').rstrip('=')
+                    token = f"{header_b64}.{payload_b64}.{signature_b64}"
                 else: # pkcs11
                     self.log_message(self.plugin.t("signing_pkcs11"))
                     lib = pkcs11.lib(dll_path)

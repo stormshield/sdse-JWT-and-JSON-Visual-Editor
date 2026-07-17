@@ -81,7 +81,7 @@
         "context_schema_values": "Valeurs du schéma",
         "menu_help": "?",
         "menu_about": "À propos",
-        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.6.1\n\nAuteur: Jérôme BLONDEL (Professional services)\nLicence: GPLv3\n\nUn outil pour visualiser, éditer, valider,\net manipuler des structures JSON et des payloads JWT."
+        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.7\n\nAuteur: Jérôme BLONDEL (Professional services)\nLicence: GPLv3\n\nUn outil pour visualiser, éditer, valider,\net manipuler des structures JSON et des payloads JWT."
     },
     "en": {
         "title_main": "JWT & JSON Visual Editor",
@@ -165,7 +165,7 @@
         "context_schema_values": "Schema values",
         "menu_help": "?",
         "menu_about": "About",
-        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.6.1\n\nAuthor: Jérôme BLONDEL (Professional services)\nLicense: GPLv3\n\nA tool to visualize, edit, validate,\nand manipulate JSON structures and JWT payloads."
+        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.7\n\nAuthor: Jérôme BLONDEL (Professional services)\nLicense: GPLv3\n\nA tool to visualize, edit, validate,\nand manipulate JSON structures and JWT payloads."
     },
     "es": {
         "title_main": "Editor Visual JWT y JSON",
@@ -249,7 +249,7 @@
         "context_schema_values": "Valores del esquema",
         "menu_help": "?",
         "menu_about": "Acerca de",
-        "about_dialog_text": "Editor Visual JWT y JSON\nVersión: 2.0.6.1\n\nAutor: Jérôme BLONDEL (Servicios Profesionales)\nLicencia: GPLv3\n\nUna herramienta para visualizar, editar, validar\ny manipular estructuras JSON y payloads JWT."
+        "about_dialog_text": "Editor Visual JWT y JSON\nVersión: 2.0.7\n\nAutor: Jérôme BLONDEL (Servicios Profesionales)\nLicencia: GPLv3\n\nUna herramienta para visualizar, editar, validar\ny manipular estructuras JSON y payloads JWT."
     },
     "de": {
         "title_main": "JWT & JSON Visual Editor",
@@ -333,7 +333,7 @@
         "context_schema_values": "Schema Werte",
         "menu_help": "?",
         "menu_about": "Über",
-        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.6.1\n\nAutor: Jérôme BLONDEL (Professional Services)\nLizenz: GPLv3\n\nEin Werkzeug zum Visualisieren, Bearbeiten, Validieren\nund Manipulieren von JSON Strukturen und JWT Payloads."
+        "about_dialog_text": "JWT & JSON Visual Editor\nVersion: 2.0.7\n\nAutor: Jérôme BLONDEL (Professional Services)\nLizenz: GPLv3\n\nEin Werkzeug zum Visualisieren, Bearbeiten, Validieren\nund Manipulieren von JSON Strukturen und JWT Payloads."
     },
     "it": {
         "title_main": "Editor Visuale JWT & JSON",
@@ -417,6 +417,6 @@
         "context_schema_values": "Valori schema",
         "menu_help": "?",
         "menu_about": "Info",
-        "about_dialog_text": "Editor Visuale JWT & JSON\nVersione: 2.0.6.1\n\nAutore: Jérôme BLONDEL (Professional services)\nLicenza: GPLv3\n\nUno strumento per visualizzare, modificare, convalidare\ne manipolare strutture JSON e payload JWT."
+        "about_dialog_text": "Editor Visuale JWT & JSON\nVersione: 2.0.7\n\nAutore: Jérôme BLONDEL (Professional services)\nLicenza: GPLv3\n\nUno strumento per visualizzare, modificare, convalidare\ne manipolare strutture JSON e payload JWT."
     }
 }

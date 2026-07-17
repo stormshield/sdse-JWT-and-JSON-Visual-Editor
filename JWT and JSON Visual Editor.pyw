@@ -4,7 +4,7 @@
 """
 -----------------------------------------------------------------------------
 JWT & JSON Visual Editor
-Version: 2.0.6.1
+Version: 2.0.7
 Author: Jérôme BLONDEL (Professional services)
 Last Update: 16/07/2026
 
@@ -2061,7 +2061,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         except Exception:
             pass # No icon, proceed with just text
 
-        msg_label = ttk.Label(content_frame, text=message, wrap=350, justify='left')
+        msg_label = ttk.Label(content_frame, text=message, wraplength=350, justify='left')
         msg_label.pack(side="left", fill="both", expand=True)
         
         btn_frame = ttk.Frame(dialog, padding=(10, 5, 10, 10))
@@ -2259,7 +2259,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
                 import urllib.request
                 req = urllib.request.Request(
                     "https://github.githubassets.com/favicons/favicon.png",
-                    headers={"User-Agent": "JWT-JSON-Editor/2.0.6.1"}
+                    headers={"User-Agent": "JWT-JSON-Editor/2.0.7"}
                 )
                 with urllib.request.urlopen(req, timeout=2) as resp:
                     raw = resp.read()

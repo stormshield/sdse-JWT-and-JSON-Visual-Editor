@@ -4,9 +4,10 @@ tkinterdnd2
 # Certificate tooling used by the core app, the standard certificate plugin, and SDS extras
 cryptography
 
-# SDS Policy Signer plugin (JWT signing)
+# SDS Policy Signer plugin (JWT signing and Windows Certificate Store integration)
 pyjwt
 python-pkcs11
+# Note: Windows Certificate Store (CAPI/CNG) signatures use native Windows PowerShell/.NET and require no extra Python packages.
 
 # Packager for bundling the main app and its plugins
 pyinstaller

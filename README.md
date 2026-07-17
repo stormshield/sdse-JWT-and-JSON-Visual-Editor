@@ -1,6 +1,6 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0.6.1  
+**Version:** 2.0.7  
 **Author:** Jérôme BLONDEL  
 **Last Update:** 16/07/2026  
 **Source:** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
@@ -138,6 +138,11 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 ## Changelog
 
+### v2.0.7 — 16/07/2026
+
+*   **SDS Policy Signer — Microsoft Certificate Store (CAPI/CNG) support:** Added capability to sign policies using a certificate from the Windows Certificate Store. It supports TPM-backed, smart card, and non-exportable keys natively, showing native Windows security prompts if required.
+*   **Version bump:** Updated version number to 2.0.7.
+
 ### v2.0.6.1 — 16/07/2026
 
 *   **SDS Policy Signer — Smart Card (PKCS#11) support:** Added capability to sign policies using a smart card. Users can specify a PKCS#11 middleware DLL, input their PIN, load, list and select certificates from the card.
@@ -171,7 +176,7 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0.6.1  
+**Version :** 2.0.7  
 **Auteur :** Jérôme BLONDEL  
 **Dernière mise à jour :** 16/07/2026  
 **Source :** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
@@ -303,6 +308,11 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 ---
 
 ## Changelog
+
+### v2.0.7 — 16/07/2026
+
+*   **Signataire de politique SDS — Support du magasin de certificats Microsoft (CAPI/CNG) :** Ajout de la possibilité de signer des politiques avec un certificat du magasin Windows. Supporte nativement les clés protégées par TPM, cartes à puce et clés non exportables, avec affichage des invites de sécurité Windows si nécessaire.
+*   **Mise à jour de version :** Numéro de version mis à jour en 2.0.7.
 
 ### v2.0.6.1 — 16/07/2026
 

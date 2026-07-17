@@ -71,7 +71,11 @@
         "eku_email_protection": "Protection de messagerie (S/MIME)",
         "eku_time_stamping": "Horodatage",
         "eku_ocsp_signing": "Signature OCSP",
-        "eku_smartcard_logon": "Ouverture de session par carte"
+        "eku_smartcard_logon": "Ouverture de session par carte",
+        "method_mscstore": "Magasin de certificats Windows (CAPI/CNG)",
+        "loading_certs_win": "Chargement des certificats du magasin Windows...",
+        "no_certs_in_win": "Aucun certificat trouvé dans le magasin Windows.",
+        "error_no_cert_win": "Veuillez charger et sélectionner un certificat du magasin Windows."
     },
     "en": {
         "menu_signer": "Sign file",
@@ -145,7 +149,11 @@
         "eku_email_protection": "Secure Email (S/MIME)",
         "eku_time_stamping": "Time Stamping",
         "eku_ocsp_signing": "OCSP Signing",
-        "eku_smartcard_logon": "Smartcard Logon"
+        "eku_smartcard_logon": "Smartcard Logon",
+        "method_mscstore": "Windows Certificate Store (CAPI/CNG)",
+        "loading_certs_win": "Loading Windows store certificates...",
+        "no_certs_in_win": "No certificates found in the Windows store.",
+        "error_no_cert_win": "Please load and select a Windows store certificate."
     },
     "it": {
         "menu_signer": "Firmare il file",
@@ -219,7 +227,11 @@
         "eku_email_protection": "E-mail sicura (S/MIME)",
         "eku_time_stamping": "Marcatura temporale",
         "eku_ocsp_signing": "Firma OCSP",
-        "eku_smartcard_logon": "Logon con smartcard"
+        "eku_smartcard_logon": "Logon con smartcard",
+        "method_mscstore": "Archivio certificati di Windows (CAPI/CNG)",
+        "loading_certs_win": "Caricamento certificati dall'archivio Windows...",
+        "no_certs_in_win": "Nessun certificato trovato nell'archivio Windows.",
+        "error_no_cert_win": "Caricare e selezionare un certificato dall'archivio Windows."
     },
     "de": {
         "menu_signer": "Datei signieren",
@@ -293,7 +305,11 @@
         "eku_email_protection": "Sichere E-Mail (S/MIME)",
         "eku_time_stamping": "Zeitstempelung",
         "eku_ocsp_signing": "OCSP-Signierung",
-        "eku_smartcard_logon": "Smartcard-Anmeldung"
+        "eku_smartcard_logon": "Smartcard-Anmeldung",
+        "method_mscstore": "Windows-Zertifikatsspeicher (CAPI/CNG)",
+        "loading_certs_win": "Lade Windows-Zertifikate...",
+        "no_certs_in_win": "Keine Zertifikate im Windows-Zertifikatsspeicher gefunden.",
+        "error_no_cert_win": "Bitte laden und wählen Sie ein Windows-Zertifikat aus."
     },
     "es": {
         "menu_signer": "Firmar archivo",
@@ -367,6 +383,10 @@
         "eku_email_protection": "Correo seguro (S/MIME)",
         "eku_time_stamping": "Sellado de tiempo",
         "eku_ocsp_signing": "Firma OCSP",
-        "eku_smartcard_logon": "Inicio de sesión con tarjeta inteligente"
+        "eku_smartcard_logon": "Inicio de sesión con tarjeta inteligente",
+        "method_mscstore": "Almacén de certificados de Windows (CAPI/CNG)",
+        "loading_certs_win": "Cargando certificados del almacén de Windows...",
+        "no_certs_in_win": "No se encontraron certificados en el almacén de Windows.",
+        "error_no_cert_win": "Por favor cargue y seleccione un certificado del almacén de Windows."
     }
 }

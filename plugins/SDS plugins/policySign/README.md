@@ -2,12 +2,13 @@
 
 ## English
 ### Description
-A comprehensive tool for signing Stormshield Data Security (SDS) policy files using P12 certificates or Smart Cards (PKCS#11) to create signed JWTs.
+A comprehensive tool for signing Stormshield Data Security (SDS) policy files using P12 certificates, Smart Cards (PKCS#11), or the Windows Certificate Store (CAPI/CNG) to create signed JWTs.
 
 ### Features
 - **Graphic Interface**: Dedicated window to manage signing parameters.
 - **P12 Support**: Load `.p12` or `.pfx` files with password protection.
 - **Smart Card / PKCS#11 Support**: Interface with hardware security modules (HSMs) or smart cards using a vendor PKCS#11 middleware DLL. Load and select certificates directly from the card using a PIN.
+- **Windows Certificate Store Support**: Access certificates directly from your Windows personal store (CurrentUser/LocalMachine) to sign policies. Natively supports TPM-protected keys, smart cards, and non-exportable private keys without needing vendor DLLs or entering PINs inside the application.
 - **Signing Algorithms**: Selection between RS256 and PS256.
 - **Automatic Updates**: Option to automatically update policy dates before signing.
 - **Signer Certificate in JWT**: Option to include or omit the signer certificate in the JWT header.
@@ -22,6 +23,7 @@ A comprehensive tool for signing Stormshield Data Security (SDS) policy files us
 3. Choose your signing method:
    - **P12 / PFX File**: Select your P12 file, enter its password.
    - **Smart Card (PKCS#11)**: Select the PKCS#11 middleware DLL (e.g. `eTPKCS11.dll` or `opensc-pkcs11.dll`), enter your PIN code, click "Load Certificates", and select the desired certificate from the dropdown list.
+   - **Windows Certificate Store (CAPI/CNG)**: Click "Load Certificates" to read keys from the Windows Personal store, select the desired certificate from the list. Standard Windows dialogs will automatically prompt for the smart card PIN if needed.
 4. Configure output options.
 5. Click "Sign" to generate the signed JWT and deployment folder.
 
@@ -29,12 +31,13 @@ A comprehensive tool for signing Stormshield Data Security (SDS) policy files us
 
 ## Français
 ### Description
-Un outil complet pour signer les fichiers de politique Stormshield Data Security (SDS) à l'aide de certificats P12 ou de cartes à puce (PKCS#11) pour créer des JWT signés.
+Un outil complet pour signer les fichiers de politique Stormshield Data Security (SDS) à l'aide de certificats P12, de cartes à puce (PKCS#11) ou du magasin de certificats Windows (CAPI/CNG) pour créer des JWT signés.
 
 ### Fonctionnalités
 - **Interface Graphique** : Fenêtre dédiée pour gérer les paramètres de signature.
 - **Support P12** : Chargement de fichiers `.p12` ou `.pfx` avec protection par mot de passe.
 - **Support Carte à puce / PKCS#11** : Interface avec les cartes à puce et modules HSM en utilisant la DLL du middleware PKCS#11 fourni par le fabricant. Permet de charger et de choisir un certificat de la carte à l'aide du code PIN.
+- **Support du magasin de certificats Windows** : Accès direct aux certificats du magasin personnel Windows (CurrentUser/LocalMachine) pour signer. Supporte nativement les clés protégées par TPM, les cartes à puce et les clés non exportables sans requérir de DLL spécifique ou de saisie du PIN dans l'application.
 - **Algorithmes de Signature** : Choix entre RS256 et PS256.
 - **Mises à jour Automatiques** : Option pour mettre à jour automatiquement les dates de politique avant la signature.
 - **Certificat du signataire dans le JWT** : Option pour inclure ou omettre le certificat du signataire dans l'en-tête JWT.
@@ -49,5 +52,6 @@ Un outil complet pour signer les fichiers de politique Stormshield Data Security
 3. Choisissez votre méthode de signature :
    - **Fichier P12 / PFX** : Sélectionnez votre fichier P12 et saisissez son mot de passe.
    - **Carte à puce (PKCS#11)** : Sélectionnez la DLL PKCS#11 du middleware (ex. `eTPKCS11.dll` ou `opensc-pkcs11.dll`), entrez le code PIN, cliquez sur "Charger les certificats", et sélectionnez le certificat souhaité dans la liste déroulante.
+   - **Magasin Windows (CAPI/CNG)** : Cliquez sur "Charger les certificats" pour récupérer les clés du magasin personnel, puis sélectionnez le certificat souhaité. Les boîtes de dialogue Windows se chargent de demander le code PIN si nécessaire.
 4. Configurez les options de sortie.
 5. Cliquez sur "Signer" pour générer le JWT signé et le dossier de déploiement.
