@@ -4,9 +4,9 @@
 """
 -----------------------------------------------------------------------------
 JWT & JSON Visual Editor
-Version: 2.0.7
+Version: 2.0.8
 Author: Jérôme BLONDEL (Professional services)
-Last Update: 16/07/2026
+Last Update: 11/09/2026
 
 Description:
 JWT & JSON Visual Editor is a standalone graphical application developed in
@@ -57,6 +57,7 @@ import datetime
 import uuid
 import secrets
 import webbrowser
+from typing import TYPE_CHECKING
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, font, simpledialog
 try:
@@ -172,7 +173,8 @@ class CustomText(tk.Text):
         line_index = self.index("insert linestart")
         line_text = self.get(line_index, f"{line_index} lineend")
 
-        leading_spaces = re.match(r"\s*", line_text).group(0)
+        leading_spaces_match = re.match(r"\s*", line_text)
+        leading_spaces = leading_spaces_match.group(0) if leading_spaces_match else ""
 
         prev_char_index = self.index("insert -1c")
         prev_char = self.get(prev_char_index)
@@ -249,7 +251,7 @@ class PluginManager:
                 module_name = f"plugin_mod_{safe_name}"
                 
                 spec = importlib.util.spec_from_file_location(module_name, file_path)
-                if spec is None:
+                if spec is None or spec.loader is None:
                     continue
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
@@ -303,13 +305,18 @@ def resource_path(relative_path):
     """
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
+        base_path = getattr(sys, "_MEIPASS")
     except Exception:
         base_path = os.path.dirname(os.path.abspath(__file__))
 
     return os.path.join(base_path, relative_path)
 
-class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
+if TYPE_CHECKING:
+    _AppBase = tk.Tk
+else:
+    _AppBase = TkinterDnD.Tk if (HAS_DND and TkinterDnD is not None) else tk.Tk
+
+class JWTEditorApp(_AppBase):
 
     """
     Main Application Class.
@@ -516,8 +523,9 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         self.text.bind("<Button-3>", self.show_context_menu)
 
         if HAS_DND:
-            self.text.drop_target_register('DND_Files')
-            self.text.dnd_bind('<<Drop>>', self.on_drop)
+            # tkinterdnd2 monkey-patches these methods onto Tk widgets at import time
+            self.text.drop_target_register('DND_Files')  # type: ignore[attr-defined]
+            self.text.dnd_bind('<<Drop>>', self.on_drop)  # type: ignore[attr-defined]
 
         self.setup_tags()
 
@@ -616,7 +624,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         cursor_pos = self.text.index("insert")
 
         try:
-            cursor_offset = int(self.text.count("1.0", cursor_pos, "chars")[0])
+            cursor_offset = int(self.text.count("1.0", cursor_pos, "chars")[0])  # type: ignore[index]
         except Exception:
             line, col = map(int, cursor_pos.split('.'))
             cursor_offset = sum(len(self.text.get(f"{i}.0", f"{i}.end")) + 1 for i in range(1, line)) + col
@@ -626,7 +634,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         
         for path, pos in self.key_positions.items():
             try:
-                pos_offset = int(self.text.count("1.0", pos, "chars")[0])
+                pos_offset = int(self.text.count("1.0", pos, "chars")[0])  # type: ignore[index]
             except Exception:
                 p_line, p_col = map(int, pos.split('.'))
                 pos_offset = sum(len(self.text.get(f"{i}.0", f"{i}.end")) + 1 for i in range(1, p_line)) + p_col
@@ -706,41 +714,49 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         """
         Builds the tree incrementally using a stack to keep the UI responsive.
         """
-        stack = [("", data, "")]
+        stack = [("", data, "", None)]
 
         def step():
             nonlocal stack
             processed = 0
             try:
                 while stack and processed < self._tree_build_batch_size:
-                    parent, node, path = stack.pop()
+                    parent, node, path, resume = stack.pop()
                     if isinstance(node, dict):
-                        items = list(node.items())
-                        for key, value in reversed(items):
+                        items = list(node.items()) if resume is None else resume
+                        is_list = False
+                    elif isinstance(node, list):
+                        items = list(enumerate(node)) if resume is None else resume
+                        is_list = True
+                    else:
+                        continue
+
+                    pending = []
+                    remainder_start = None
+                    for i, (key, value) in enumerate(items):
+                        if is_list:
+                            current_path = f"{path}[{key}]"
+                            label = f"[{key}]"
+                        else:
                             current_path = f"{path}.{key}" if path else key
+                            label = key
                             key_pattern = f'"{key}"'
                             self.find_key_position(key, current_path, key_pattern)
 
-                            if isinstance(value, (dict, list)):
-                                tree_id = self.tree.insert(parent, "end", text=key, tags=(current_path,))
-                                stack.append((tree_id, value, current_path))
-                            else:
-                                self.tree.insert(parent, "end", text=key, tags=(current_path,))
-                            processed += 1
-                            if processed >= self._tree_build_batch_size:
-                                break
-                    elif isinstance(node, list):
-                        for idx in range(len(node) - 1, -1, -1):
-                            item = node[idx]
-                            current_path = f"{path}[{idx}]"
-                            if isinstance(item, (dict, list)):
-                                tree_id = self.tree.insert(parent, "end", text=f"[{idx}]", tags=(current_path,))
-                                stack.append((tree_id, item, current_path))
-                            else:
-                                self.tree.insert(parent, "end", text=f"[{idx}]", tags=(current_path,))
-                            processed += 1
-                            if processed >= self._tree_build_batch_size:
-                                break
+                        if isinstance(value, (dict, list)):
+                            tree_id = self.tree.insert(parent, "end", text=label, tags=(current_path,))
+                            pending.append((tree_id, value, current_path, None))
+                        else:
+                            self.tree.insert(parent, "end", text=label, tags=(current_path,))
+                        processed += 1
+                        if processed >= self._tree_build_batch_size:
+                            remainder_start = i + 1
+                            break
+
+                    if remainder_start is not None and remainder_start < len(items):
+                        stack.append((parent, node, path, items[remainder_start:]))
+
+                    stack.extend(reversed(pending))
             except Exception:
                 stack = []
 
@@ -1096,7 +1112,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         self._scroll_redraw_after_id = self.after(delay_ms, self.linenumbers.redraw)
 
     def _schedule_syntax_highlight(self, delay_ms: int = 150):
-        if hasattr(self, "_highlight_after_id"):
+        if hasattr(self, "_highlight_after_id") and self._highlight_after_id is not None:
             try:
                 self.after_cancel(self._highlight_after_id)
             except Exception:
@@ -1161,13 +1177,13 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         self.bold_font = font.Font(self.text, self.current_font)
         self.bold_font.configure(weight="bold")
 
-        self.text.tag_configure("key", foreground="#ad00ff", selectforeground=None)
-        self.text.tag_configure("string", foreground="#800000", selectforeground=None)
-        self.text.tag_configure("number", foreground="#ff8000", selectforeground=None)
-        self.text.tag_configure("bool", foreground="#18af8a", selectforeground=None)
-        self.text.tag_configure("keyword", foreground="#800000", selectforeground=None)
-        self.text.tag_configure("bracket", foreground="#000000", selectforeground=None)
-        self.text.tag_configure("error", background="#fa0f00", selectforeground=None)
+        self.text.tag_configure("key", foreground="#ad00ff", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("string", foreground="#800000", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("number", foreground="#ff8000", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("bool", foreground="#18af8a", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("keyword", foreground="#800000", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("bracket", foreground="#000000", selectforeground=None)  # type: ignore[arg-type]
+        self.text.tag_configure("error", background="#fa0f00", selectforeground=None)  # type: ignore[arg-type]
 
         self.text.tag_configure("highlight", background="yellow")
         self.text.tag_configure("current", background="orange")
@@ -1274,8 +1290,8 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
 
         if self.loaded_schema_data and token not in ("true", "false"):
             key_name, json_path = self.find_json_key_at_cursor()
-            
-            if json_path:
+
+            if key_name and json_path:
                 enum_values = self.get_schema_enum_for_path(json_path)
                 
                 if enum_values and len(enum_values) > 0:
@@ -1467,7 +1483,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
         """
         txt = self.text.get("1.0", "end-1c")
 
-        if hasattr(self, "_highlight_after_id"):
+        if hasattr(self, "_highlight_after_id") and self._highlight_after_id is not None:
             try:
                 self.after_cancel(self._highlight_after_id)
             except Exception:
@@ -2259,7 +2275,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
                 import urllib.request
                 req = urllib.request.Request(
                     "https://github.githubassets.com/favicons/favicon.png",
-                    headers={"User-Agent": "JWT-JSON-Editor/2.0.7"}
+                    headers={"User-Agent": "JWT-JSON-Editor/2.0.8"}
                 )
                 with urllib.request.urlopen(req, timeout=2) as resp:
                     raw = resp.read()
@@ -2274,7 +2290,7 @@ class JWTEditorApp(TkinterDnD.Tk if HAS_DND else tk.Tk):
                         if w > 16:
                             photo = photo.subsample(max(1, w // 16))
                         ico_label.config(image=photo, cursor="hand2")
-                        ico_label.image = photo  # prevent GC
+                        setattr(ico_label, "image", photo)  # prevent GC
                         ico_label.bind("<Button-1>", lambda e: webbrowser.open(url))
                     except Exception:
                         pass

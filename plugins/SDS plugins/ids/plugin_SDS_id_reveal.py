@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import base64
-import ctypes
 
 def get_plugin_resource_path(relative_path):
     """Get absolute path to plugin resource, works for dev and for PyInstaller."""
@@ -53,10 +52,6 @@ except ImportError:
     default_backend = None
     NameOID = None
 
-# Windows API constants for physical key state detection
-VK_RMENU = 0xA5  # Virtual key code for Right Alt (AltGr)
-
-
 class Plugin:
     def __init__(self, app):
         self.app = app
@@ -66,7 +61,6 @@ class Plugin:
         self._original_insert_pos = None
         self._original_yview = None
         self._id_name_map = {}  # maps id -> display name
-        self._poll_timer = None
 
     def t(self, key, **kwargs):
         lang = getattr(self.app, "current_language", "en")
@@ -88,27 +82,36 @@ class Plugin:
         return text
 
     def register(self):
-        """Bind AltGr detection using Windows API for reliable detection."""
-        # On Windows, AltGr is translated by the keyboard driver to Ctrl+Alt.
-        # Tkinter never sees an Alt_R keysym, only Control_L with a modified state.
-        # Solution: use ctypes to call GetAsyncKeyState(VK_RMENU) to check the
-        # physical state of the right Alt key, and poll for its release.
-        
-        self.app.bind_all("<KeyPress>", self._on_any_keypress, add="+")
-        
-        # Monkey-patch the mousewheel handlers to prevent zoom during reveal
-        # (AltGr sends Ctrl+Alt on Windows, so Ctrl+Scroll triggers zoom)
-        self._original_on_ctrl_mousewheel = self.app._on_ctrl_mousewheel
-        self._original_on_mousewheel = self.app._on_mousewheel
-        self.app._on_ctrl_mousewheel = self._patched_ctrl_mousewheel
-        self.app._on_mousewheel = self._patched_mousewheel
+        """Nothing to bind yet — the text widget isn't built until ui_ready."""
+        pass
 
-    def _is_altgr_physically_pressed(self):
-        """Check if AltGr (Right Alt) is physically pressed using Windows API."""
-        try:
-            return bool(ctypes.windll.user32.GetAsyncKeyState(VK_RMENU) & 0x8000)
-        except Exception:
-            return False
+    def on_event(self, event_name, data=None):
+        if event_name == "ui_ready":
+            # Bind reveal toggling to a middle mouse click on the text editor.
+            self.app.text.bind("<Button-2>", self._on_middle_click)
+
+            # Monkey-patch the mousewheel handlers to prevent zoom during reveal
+            self._original_on_ctrl_mousewheel = self.app._on_ctrl_mousewheel
+            self._original_on_mousewheel = self.app._on_mousewheel
+            self.app._on_ctrl_mousewheel = self._patched_ctrl_mousewheel
+            self.app._on_mousewheel = self._patched_mousewheel
+
+    def _on_middle_click(self, event=None):
+        """Toggle between revealing labels and restoring raw IDs on middle click."""
+        if self._is_revealing:
+            self._restore_ids()
+        else:
+            self._reveal_labels()
+        return "break"
+
+    def ensure_id_view(self):
+        """Force the raw ID view back if labels are currently displayed.
+
+        Used by other plugins (e.g. the signer) to guarantee that raw IDs,
+        not display labels, are what gets read/exported.
+        """
+        if self._is_revealing:
+            self._restore_ids()
 
     def _patched_ctrl_mousewheel(self, event):
         """Intercept Ctrl+MouseWheel: scroll normally during reveal, zoom otherwise."""
@@ -134,30 +137,8 @@ class Plugin:
             return "break"
         return self._original_on_mousewheel(event)
 
-    def _on_any_keypress(self, event):
-        """Detect AltGr press via any key event + physical key state check."""
-        if self._is_revealing:
-            return
-        
-        # Check if AltGr is physically pressed right now
-        if self._is_altgr_physically_pressed():
-            self._on_altgr_press()
-
-    def _start_release_poll(self):
-        """Poll every 50ms to detect when AltGr is released."""
-        if not self._is_revealing:
-            return
-        
-        if not self._is_altgr_physically_pressed():
-            # AltGr was released — restore original text
-            self._on_altgr_release()
-            return
-        
-        # Still held — check again in 50ms
-        self._poll_timer = self.app.after(50, self._start_release_poll)
-
-    def _on_altgr_press(self, event=None):
-        """When AltGr is pressed, replace IDs with their names/CN in the text widget."""
+    def _reveal_labels(self, event=None):
+        """Replace IDs with their names/CN in the text widget."""
         if self._is_revealing:
             return  # Already revealing, don't re-trigger
         
@@ -221,7 +202,6 @@ class Plugin:
         except Exception:
             pass
         
-        # Start polling for AltGr release — MUST run even if highlighting fails
         try:
             # Apply syntax highlighting on the modified text
             try:
@@ -241,22 +221,12 @@ class Plugin:
         finally:
             # Make text read-only during reveal to prevent edits on modified content
             self.app.text.config(state="disabled")
-            # Always start polling so we can restore on release
-            self._start_release_poll()
 
-    def _on_altgr_release(self, event=None):
-        """When AltGr is released, restore the original text."""
+    def _restore_ids(self, event=None):
+        """Restore the original text (raw IDs) in the text widget."""
         if not self._is_revealing:
             return
-        
-        # Cancel any pending poll timer
-        if self._poll_timer is not None:
-            try:
-                self.app.after_cancel(self._poll_timer)
-            except Exception:
-                pass
-            self._poll_timer = None
-        
+
         if self._original_text is None:
             self._is_revealing = False
             return
@@ -279,7 +249,7 @@ class Plugin:
         except Exception:
             pass
         
-        # Restore the scroll position the user was at when they released AltGr
+        # Restore the scroll position the user was at when they released the reveal key
         # (not the original position from before the reveal)
         try:
             self.app.text.yview_moveto(current_yview[0])

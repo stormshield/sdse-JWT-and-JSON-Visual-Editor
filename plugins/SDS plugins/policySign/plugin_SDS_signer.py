@@ -449,7 +449,7 @@ class SignerWindow:
         self.root.transient(main_app)  # Establishes parent-child relationship for focus/stacking
         
         # Center the window
-        window_width = 745
+        window_width = 845
         window_height = 560 # Increased height for new layout
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
@@ -1397,6 +1397,13 @@ class SignerWindow:
                 return
             selected_cert_info = self.loaded_certificates[selected_idx]
         
+        # Ensure raw IDs (not display labels) are shown before reading the editor content
+        plugin_manager = getattr(self.main_app, "plugin_manager", None)
+        if plugin_manager:
+            for p in plugin_manager.plugins:
+                if hasattr(p, "ensure_id_view"):
+                    p.ensure_id_view()
+
         # Get content from editor
         editor_content = self.main_app.text.get("1.0", "end-1c")
         if not editor_content.strip():

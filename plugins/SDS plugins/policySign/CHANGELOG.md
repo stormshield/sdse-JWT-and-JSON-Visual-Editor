@@ -1,5 +1,8 @@
 # Changelog
 
+## 2026-09-11 (v2.0.8)
+- Updated version number to 2.0.8.
+
 ## 2026-07-16 (v2.0.7)
 - Added Microsoft Certificate Store (CAPI/CNG) signature support.
 - Added dropdown to list and select active certificates from the Windows store (CurrentUser and LocalMachine personal stores).

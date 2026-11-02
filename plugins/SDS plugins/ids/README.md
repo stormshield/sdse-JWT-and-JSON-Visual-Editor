@@ -11,7 +11,7 @@ This plugin provides tools to generate unique identifiers, preview linked data, 
   - **UUID**: Standard Version 4 UUID.
 - **Certificate Preview**: Right-click on an ID inside `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId` or `encryptionKeyAuthorityId` to display the associated certificate details (CN, Issuer, validity, serial number, SHA-256 fingerprint) with options to copy fields or save as `.cer`.
 - **LDAP Preview**: Right-click on an ID inside `ldapAddressBookList` to display the associated LDAP configuration (name, address, port, protocol, base DN, timeout, search attributes) with options to copy fields.
-- **ID Reveal (AltGr)**: Hold the **AltGr** key to temporarily replace all ID references in the editor with their corresponding human-readable names. Release AltGr to restore the original IDs.
+- **ID Reveal (F1)**: Hold the **F1** key to temporarily replace all ID references in the editor with their corresponding human-readable names. Release F1 to restore the original IDs.
 
 ### Usage
 
@@ -27,13 +27,13 @@ This plugin provides tools to generate unique identifiers, preview linked data, 
 
 **ID Reveal:**
 1. Open a JSON file containing `certificateData` and/or `ldapData` sections.
-2. **Hold AltGr**: all hex IDs referenced throughout the JSON are instantly replaced by:
+2. **Hold F1**: all hex IDs referenced throughout the JSON are instantly replaced by:
    - The **CN (Common Name)** extracted from the X.509 certificate (for `certificateData` entries)
    - The **configuration name** (for `ldapData` entries)
 3. Revealed names are highlighted in cyan on a dark background for easy identification.
 4. The editor is read-only while revealing to prevent accidental edits.
-5. **Release AltGr**: the original IDs are restored, along with cursor position and scroll state.
-6. **Scroll during reveal**: Mouse wheel scrolling works normally during reveal (AltGr+Scroll does not trigger zoom).
+5. **Release F1**: the original IDs are restored, along with cursor position and scroll state.
+6. **Scroll during reveal**: Mouse wheel scrolling works normally during reveal.
 
 > **Note:** The `cryptography` library is required to extract CN from certificates. Without it, only LDAP names are resolved.
 
@@ -50,7 +50,7 @@ Ce plugin fournit des outils pour générer des identifiants uniques, prévisual
   - **UUID** : UUID standard de version 4.
 - **Aperçu Certificat** : Clic droit sur un ID dans `certificateIds`, `certificateID`, `updateOnlyFromCAs`, `removeOnlyFromCAs`, `signatureKeyAuthorityId` ou `encryptionKeyAuthorityId` pour afficher les détails du certificat associé (CN, émetteur, validité, numéro de série, empreinte SHA-256) avec options de copie et de sauvegarde en `.cer`.
 - **Aperçu LDAP** : Clic droit sur un ID dans `ldapAddressBookList` pour afficher la configuration LDAP associée (nom, adresse, port, protocole, base DN, timeout, attributs de recherche) avec options de copie. 
-- **Révélation d'IDs (AltGr)** : Maintenez la touche **AltGr** enfoncée pour remplacer temporairement tous les IDs dans l'éditeur par leurs noms lisibles correspondants. Relâchez AltGr pour restaurer les IDs originaux.
+- **Révélation d'IDs (F1)** : Maintenez la touche **F1** enfoncée pour remplacer temporairement tous les IDs dans l'éditeur par leurs noms lisibles correspondants. Relâchez F1 pour restaurer les IDs originaux.
 
 ### Utilisation
 
@@ -66,13 +66,13 @@ Ce plugin fournit des outils pour générer des identifiants uniques, prévisual
 
 **Révélation d'IDs :**
 1. Ouvrez un fichier JSON contenant des sections `certificateData` et/ou `ldapData`.
-2. **Maintenez AltGr** : tous les IDs hexadécimaux référencés dans le JSON sont instantanément remplacés par :
+2. **Maintenez F1** : tous les IDs hexadécimaux référencés dans le JSON sont instantanément remplacés par :
    - Le **CN (Common Name)** extrait du certificat X.509 (pour les entrées `certificateData`)
    - Le **nom de configuration** (pour les entrées `ldapData`)
 3. Les noms révélés sont mis en surbrillance (cyan sur fond sombre) pour une identification facile.
 4. L'éditeur est en lecture seule pendant la révélation pour éviter toute modification accidentelle.
-5. **Relâchez AltGr** : les IDs originaux sont restaurés, ainsi que la position du curseur et le défilement.
-6. **Scroll pendant la révélation** : Le scroll de la souris fonctionne normalement pendant la révélation (AltGr+Scroll ne déclenche pas le zoom).
+5. **Relâchez F1** : les IDs originaux sont restaurés, ainsi que la position du curseur et le défilement.
+6. **Scroll pendant la révélation** : Le scroll de la souris fonctionne normalement pendant la révélation.
 
 > **Note :** La bibliothèque `cryptography` est nécessaire pour extraire le CN des certificats. Sans elle, seuls les noms LDAP sont résolus.
 

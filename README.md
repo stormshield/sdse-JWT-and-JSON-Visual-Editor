@@ -1,8 +1,8 @@
 # JWT & JSON Visual Editor
 
-**Version:** 2.0.7  
+**Version:** 2.0.8  
 **Author:** Jérôme BLONDEL  
-**Last Update:** 16/07/2026  
+**Last Update:** 11/09/2026  
 **Source:** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Screenshots
@@ -38,7 +38,7 @@ The tool is designed to be lightweight, performant (even with large files), and 
     *   **Schema Validation:** Validate your JSON against a schema (supports enumerations and types).
     *   **Context Menu Tools:** Generate IDs (ObjectId, UUID) and update date fields directly from the editor.
     *   **Certificate/LDAP Preview:** Right-click on a referenced ID to instantly preview the associated certificate details or LDAP configuration.
-    *   **ID Reveal (AltGr):** Hold the AltGr key to temporarily replace all IDs with human-readable names (certificate CN or LDAP config name).
+    *   **ID Reveal (F1):** Hold the F1 key to temporarily replace all IDs with human-readable names (certificate CN or LDAP config name).
 
 *   **Security & Certificates:**
     *   Visualization of X.509 certificate details (Subject CN, Issuer CN) present in JSON values (requires `cryptography` library).
@@ -53,14 +53,14 @@ The tool is designed to be lightweight, performant (even with large files), and 
 *   **Extensibility (Plugins):**
     *   **Modular Architecture:** Expand functionality via Python plugins organized in categories: `Required`, `Standard`, and `SDS` (Specialized).
     *   **Decentralized Translations:** Each plugin manages its own translations via a local `languages.json` file for easier internationalization.
-    *   **Specialized Tools:** Includes plugins like the **SDS Policy Signer** for signing JSON payloads with P12 certificates or Smart Cards (PKCS#11), and the **ID Reveal** for instant AltGr-based ID resolution.
+    *   **Specialized Tools:** Includes plugins like the **SDS Policy Signer** for signing JSON payloads with P12 certificates or Smart Cards (PKCS#11), and the **ID Reveal** for instant F1-based ID resolution.
 
 ### Included Plugins
 
 Plugins shipped in the `plugins/` folder:
 
 *   **Standard plugins**: Boolean toggle, Certificates viewer/extractor, Extractor (to `extract.json`), JSON Schema Generator
-*   **SDS plugins**: Date updater, IDs generator & preview (certificate/LDAP), ID Reveal (AltGr), Import certificates into `certificateData`, P7B Builder (PKCS#7), Policy Signer (P12/Smart Card → signed JWT)
+*   **SDS plugins**: Date updater, IDs generator & preview (certificate/LDAP), ID Reveal (F1), Import certificates into `certificateData`, P7B Builder (PKCS#7), Policy Signer (P12/Smart Card → signed JWT)
 
 ## Installation
 
@@ -116,7 +116,7 @@ python script.pyw --lang en
 | **Ctrl + Y** | Redo |
 | **Ctrl + Wheel** | Text Zoom |
 | **Shift + Wheel** | Horizontal Scroll |
-| **AltGr (hold)** | Reveal IDs as names (SDS IDs plugin) |
+| **F1 (hold)** | Reveal IDs as names (SDS IDs plugin) |
 
 ## Automation Scripts
 
@@ -137,6 +137,10 @@ The project includes two `.bat` scripts to simplify common tasks:
 ---
 
 ## Changelog
+
+### v2.0.8 — 11/09/2026
+
+*   **Version bump:** Updated version number to 2.0.8.
 
 ### v2.0.7 — 16/07/2026
 
@@ -176,9 +180,9 @@ The project includes two `.bat` scripts to simplify common tasks:
 
 # JWT & JSON Visual Editor
 
-**Version :** 2.0.7  
+**Version :** 2.0.8  
 **Auteur :** Jérôme BLONDEL  
-**Dernière mise à jour :** 16/07/2026  
+**Dernière mise à jour :** 11/09/2026  
 **Source :** [github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor](https://github.com/stormshield/sdse-JWT-and-JSON-Visual-Editor)
 
 ## Description
@@ -210,7 +214,7 @@ L'outil est conçu pour être léger, performant (même avec de gros fichiers) e
     *   **Validation de Schéma :** Validez votre JSON contre un schéma (support des énumérations et types).
     *   **Outils Contextuels :** Génération d'identifiants (ObjectId, UUID) et mise à jour des champs date directement depuis l'éditeur.
     *   **Aperçu Certificat/LDAP :** Clic droit sur un ID référencé pour prévisualiser instantanément les détails du certificat associé ou la configuration LDAP.
-    *   **Révélation d'IDs (AltGr) :** Maintenez la touche AltGr pour remplacer temporairement tous les IDs par des noms lisibles (CN du certificat ou nom de configuration LDAP).
+    *   **Révélation d'IDs (F1) :** Maintenez la touche F1 pour remplacer temporairement tous les IDs par des noms lisibles (CN du certificat ou nom de configuration LDAP).
 
 *   **Sécurité & Certificats :**
     *   Visualisation des détails des certificats X.509 (CN Sujet, CN Émetteur) présents dans les valeurs JSON (requiert la librairie `cryptography`).
@@ -225,14 +229,14 @@ L'outil est conçu pour être léger, performant (même avec de gros fichiers) e
 *   **Extensibilité (Plugins) :**
     *   **Architecture Modulaire :** Possibilité d'étendre les fonctionnalités via des plugins Python organisés par catégories : `Required`, `Standard`, et `SDS` (Spécialisés).
     *   **Traductions Décentralisées :** Chaque plugin gère ses propres traductions via un fichier `languages.json` local, facilitant l'internationalisation.
-    *   **Outils Spécialisés :** Inclut des outils comme le **SDS Policy Signer** pour signer des payloads JSON avec des certificats P12, et le **ID Reveal** pour la résolution instantanée d'IDs via AltGr.
+    *   **Outils Spécialisés :** Inclut des outils comme le **SDS Policy Signer** pour signer des payloads JSON avec des certificats P12, et le **ID Reveal** pour la résolution instantanée d'IDs via F1.
 
 ### Plugins Inclus
 
 Plugins fournis dans le dossier `plugins/` :
 
 *   **Plugins Standard** : Bascule booléen, Certificats (visualisation/extraction), Extractor (vers `extract.json`), Générateur de schéma JSON
-*   **Plugins SDS** : Mise à jour de date, Génération d'IDs & aperçu (certificat/LDAP), Révélation d'IDs (AltGr), Import de certificats dans `certificateData`, Générateur P7B (PKCS#7), Signature de politique (P12 → JWT signé)
+*   **Plugins SDS** : Mise à jour de date, Génération d'IDs & aperçu (certificat/LDAP), Révélation d'IDs (F1), Import de certificats dans `certificateData`, Générateur P7B (PKCS#7), Signature de politique (P12 → JWT signé)
 
 ## Installation
 
@@ -287,7 +291,7 @@ python script.pyw --lang en
 | **Ctrl + Y** | Rétablir |
 | **Ctrl + Molette** | Zoom Text |
 | **Shift + Molette** | Scroll Horizontal |
-| **AltGr (maintenu)** | Révéler les IDs sous forme de noms (plugin SDS IDs) |
+| **F1 (maintenu)** | Révéler les IDs sous forme de noms (plugin SDS IDs) |
 
 ## Scripts d'Automatisation
 
@@ -308,6 +312,10 @@ Le projet inclut plusieurs scripts `.bat` pour simplifier les tâches courantes 
 ---
 
 ## Changelog
+
+### v2.0.8 — 11/09/2026
+
+*   **Mise à jour de version :** Numéro de version mis à jour en 2.0.8.
 
 ### v2.0.7 — 16/07/2026
 
